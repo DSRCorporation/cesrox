@@ -1,7 +1,7 @@
 use super::Prefix;
 use crate::{
     derivation::{self_signing::SelfSigning, DerivationCode},
-    error::Error,
+    error::CesrError,
 };
 use base64::decode_config;
 use core::str::FromStr;
@@ -23,7 +23,7 @@ impl SelfSigningPrefix {
 }
 
 impl FromStr for SelfSigningPrefix {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let code = SelfSigning::from_str(s)?;
@@ -34,7 +34,7 @@ impl FromStr for SelfSigningPrefix {
                 decode_config(&s[code.code_len()..code.prefix_b64_len()], base64::URL_SAFE)?,
             ))
         } else {
-            Err(Error::SemanticError(format!(
+            Err(CesrError::SemanticError(format!(
                 "Incorrect Prefix Length: {}",
                 s
             )))
@@ -43,8 +43,8 @@ impl FromStr for SelfSigningPrefix {
 }
 
 impl Prefix for SelfSigningPrefix {
-    fn derivative(&self) -> Vec<u8> {
-        self.signature.to_owned()
+    fn derivative(&self) -> &[u8] {
+        self.signature.as_slice()
     }
     fn derivation_code(&self) -> String {
         self.derivation.to_str()

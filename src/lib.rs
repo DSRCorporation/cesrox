@@ -1,4 +1,11 @@
-mod derivation;
-mod error;
-mod keys;
-mod prefix;
+pub mod derivation;
+pub mod error;
+pub mod event;
+pub mod event_parsing;
+pub mod ffi;
+pub mod keys;
+pub mod message;
+pub mod prefix;
+pub mod utils;
+
+pub use message::message::{Message, MessageList};

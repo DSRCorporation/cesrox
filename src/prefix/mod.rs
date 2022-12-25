@@ -1,6 +1,6 @@
 use crate::{
     derivation::{basic::Basic, self_signing::SelfSigning},
-    error::Error,
+    error::CesrError,
 };
 use base64::encode_config;
 use core::str::FromStr;
@@ -18,8 +18,8 @@ pub use seed::SeedPrefix;
 pub use self_addressing::SelfAddressingPrefix;
 pub use self_signing::SelfSigningPrefix;
 
-pub trait Prefix: FromStr<Err = Error> {
-    fn derivative(&self) -> Vec<u8>;
+pub trait Prefix: FromStr<Err = CesrError> {
+    fn derivative(&self) -> &[u8];
     fn derivation_code(&self) -> String;
     fn to_str(&self) -> String {
         // empty data cannot be prefixed!
@@ -42,13 +42,13 @@ pub enum IdentifierPrefix {
 }
 
 impl FromStr for IdentifierPrefix {
-    type Err = Error;
+    type Err = CesrError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match BasicPrefix::from_str(s) {
             Ok(bp) => Ok(Self::Basic(bp)),
             Err(err) => {
                 match err {
-                    Error::Base64DecodingError { source: _ } => return Err(err),
+                    CesrError::Base64DecodingError { source: _ } => return Err(err),
                     _ => (),
                 }
                 match SelfAddressingPrefix::from_str(s) {
@@ -61,13 +61,14 @@ impl FromStr for IdentifierPrefix {
 }
 
 impl Prefix for IdentifierPrefix {
-    fn derivative(&self) -> Vec<u8> {
+    fn derivative(&self) -> &[u8] {
         match self {
             Self::Basic(bp) => bp.derivative(),
             Self::SelfAddressing(sap) => sap.derivative(),
             Self::SelfSigning(ssp) => ssp.derivative(),
         }
     }
+
     fn derivation_code(&self) -> String {
         match self {
             Self::Basic(bp) => bp.derivation_code(),
@@ -113,28 +114,28 @@ pub fn verify(
     data: &[u8],
     key: &BasicPrefix,
     signature: &SelfSigningPrefix,
-) -> Result<bool, Error> {
+) -> Result<bool, CesrError> {
     match key.derivation {
         Basic::Ed25519 | Basic::Ed25519NT => match signature.derivation {
             SelfSigning::Ed25519Sha512 => Ok(key
                 .public_key
                 .verify_ed(data.as_ref(), &signature.signature)),
-            _ => Err(Error::SemanticError("wrong sig type".to_string())),
+            _ => Err(CesrError::SemanticError("wrong sig type".to_string())),
         },
         Basic::ECDSAsecp256k1 | Basic::ECDSAsecp256k1NT => match signature.derivation {
             SelfSigning::ECDSAsecp256k1Sha256 => Ok(key
                 .public_key
                 .verify_ecdsa(data.as_ref(), &signature.signature)),
-            _ => Err(Error::SemanticError("wrong sig type".to_string())),
+            _ => Err(CesrError::SemanticError("wrong sig type".to_string())),
         },
-        _ => Err(Error::SemanticError("ineligible key type".to_string())),
+        _ => Err(CesrError::SemanticError("ineligible key type".to_string())),
     }
 }
 
 /// Derive
 ///
 /// Derives the Basic Prefix corresponding to the given Seed Prefix
-pub fn derive(seed: &SeedPrefix, transferable: bool) -> Result<BasicPrefix, Error> {
+pub fn derive(seed: &SeedPrefix, transferable: bool) -> Result<BasicPrefix, CesrError> {
     let (pk, _) = seed.derive_key_pair()?;
     Ok(BasicPrefix::new(
         match seed {
@@ -142,7 +143,7 @@ pub fn derive(seed: &SeedPrefix, transferable: bool) -> Result<BasicPrefix, Erro
             SeedPrefix::RandomSeed256Ed25519(_) if !transferable => Basic::Ed25519NT,
             SeedPrefix::RandomSeed256ECDSAsecp256k1(_) if transferable => Basic::ECDSAsecp256k1,
             SeedPrefix::RandomSeed256ECDSAsecp256k1(_) if !transferable => Basic::ECDSAsecp256k1NT,
-            _ => return Err(Error::ImproperPrefixType),
+            _ => return Err(CesrError::ImproperPrefixType),
         },
         pk,
     ))
@@ -157,10 +158,9 @@ mod tests {
     };
     use ed25519_dalek::Keypair;
     use rand::rngs::OsRng;
-    use std::borrow::Borrow;
 
     #[test]
-    fn simple_deserialize() -> Result<(), Error> {
+    fn simple_deserialize() -> Result<(), CesrError> {
         let pref: IdentifierPrefix = "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".parse()?;
 
         assert_eq!(pref.derivation_code(), "B");
@@ -173,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn length() -> Result<(), Error> {
+    fn length() -> Result<(), CesrError> {
         // correct
         assert!(IdentifierPrefix::from_str("BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").is_ok());
         assert!(IdentifierPrefix::from_str("CBBBBBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").is_ok());
@@ -191,7 +191,7 @@ mod tests {
             match IdentifierPrefix::from_str("ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 .unwrap_err()
             {
-                Error::DeserializeError(msg) => msg.contains("Unknown master code"),
+                CesrError::DeserializeError(msg) => msg.contains("Unknown master code"),
                 _ => false,
             }
         );
@@ -201,7 +201,7 @@ mod tests {
             match IdentifierPrefix::from_str("BAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAAAA")
                 .unwrap_err()
             {
-                Error::Base64DecodingError { source: _ } => true,
+                CesrError::Base64DecodingError { source: _ } => true,
                 _ => false,
             }
         );
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn simple_serialize() -> Result<(), Error> {
+    fn simple_serialize() -> Result<(), CesrError> {
         let pref = Basic::Ed25519NT.derive(PublicKey::new(
             ed25519_dalek::PublicKey::from_bytes(&[0; 32])?
                 .to_bytes()
@@ -226,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn verify() -> Result<(), Error> {
+    fn verify() -> Result<(), CesrError> {
         let data_string = "hello there";
 
         let kp = Keypair::generate(&mut OsRng);
@@ -249,10 +249,10 @@ mod tests {
     }
 
     #[test]
-    fn prefix_deserialization() -> Result<(), Error> {
+    fn prefix_deserialization() -> Result<(), CesrError> {
         /// Helper function that checks whether all codes fulfill the condition
         /// given by predicate `pred`.
-        fn all_codes<F>(codes: Vec<(&str, usize)>, pred: F) -> Result<(), Error>
+        fn all_codes<F>(codes: Vec<(&str, usize)>, pred: F) -> Result<(), CesrError>
         where
             F: Fn(IdentifierPrefix) -> bool,
         {
@@ -298,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    fn prefix_serialization() -> Result<(), Error> {
+    fn prefix_serialization() -> Result<(), CesrError> {
         // The lengths of respective vectors are choosen according to [0, Section 14.2]
         // [0]: https://github.com/SmithSamuelM/Papers/raw/master/whitepapers/KERI_WP_2.x.web.pdf
 

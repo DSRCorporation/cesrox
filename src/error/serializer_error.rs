@@ -3,7 +3,6 @@ use std::fmt::{self, Display, Formatter};
 
 use serde::{de, ser};
 
-use crate::derivation::basic::Basic;
 use crate::error::serializer_error::Error::{
     Eof, ExpectedArray, ExpectedArrayComma, ExpectedArrayEnd, ExpectedBoolean, ExpectedEnum,
     ExpectedInteger, ExpectedMap, ExpectedMapColon, ExpectedMapComma, ExpectedMapEnd, ExpectedNull,

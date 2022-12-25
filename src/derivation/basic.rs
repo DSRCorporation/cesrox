@@ -1,5 +1,5 @@
 use super::DerivationCode;
-use crate::{error::Error, keys::PublicKey, prefix::BasicPrefix};
+use crate::{error::CesrError, keys::PublicKey, prefix::BasicPrefix};
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 
@@ -57,12 +57,12 @@ impl DerivationCode for Basic {
 }
 
 impl FromStr for Basic {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s
             .get(..1)
-            .ok_or_else(|| Error::DeserializeError("Empty prefix".into()))?
+            .ok_or_else(|| CesrError::DeserializeError("Empty prefix".into()))?
         {
             "B" => Ok(Self::Ed25519NT),
             "C" => Ok(Self::X25519),
@@ -73,9 +73,9 @@ impl FromStr for Basic {
                 "AAB" => Ok(Self::ECDSAsecp256k1),
                 "AAC" => Ok(Self::Ed448NT),
                 "AAD" => Ok(Self::Ed448),
-                _ => Err(Error::DeserializeError("Unknown signature code".into())),
+                _ => Err(CesrError::DeserializeError("Unknown signature code".into())),
             },
-            _ => Err(Error::DeserializeError("Unknown prefix code".into())),
+            _ => Err(CesrError::DeserializeError("Unknown prefix code".into())),
         }
     }
 }
@@ -85,8 +85,6 @@ mod basic_tests {
     use crate::derivation::basic::Basic;
     use crate::derivation::basic::FromStr;
     use crate::derivation::DerivationCode;
-    use crate::error::Error;
-    use crate::error::Error::DeserializeError;
     use crate::keys::PublicKey;
 
     #[test]

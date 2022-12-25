@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::CesrError;
 use ed25519_dalek::{ExpandedSecretKey, SecretKey};
 use k256::ecdsa::{signature::Signer as EcdsaSigner, Signature as EcdsaSignature, SigningKey};
 use k256::ecdsa::{signature::Verifier as EcdsaVerifier, VerifyingKey};
@@ -16,8 +16,8 @@ impl PublicKey {
         }
     }
 
-    pub fn key(&self) -> Vec<u8> {
-        self.public_key.clone()
+    pub fn key(&self) -> &[u8] {
+        self.public_key.as_slice()
     }
 
     pub fn verify_ed(&self, msg: &[u8], sig: &[u8]) -> bool {
@@ -40,7 +40,6 @@ impl PublicKey {
         match VerifyingKey::from_sec1_bytes(&self.key()) {
             Ok(k) => {
                 use k256::ecdsa::Signature;
-                use std::convert::TryFrom;
                 if let Ok(sig) = Signature::try_from(sig) {
                     match k.verify(msg, &sig) {
                         Ok(()) => true,
@@ -65,12 +64,12 @@ impl PrivateKey {
         Self { key }
     }
 
-    pub fn sign_ecdsa(&self, msg: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn sign_ecdsa(&self, msg: &[u8]) -> Result<Vec<u8>, CesrError> {
         let sig: EcdsaSignature = EcdsaSigner::sign(&SigningKey::from_bytes(&self.key)?, msg);
         Ok(sig.as_ref().to_vec())
     }
 
-    pub fn sign_ed(&self, msg: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn sign_ed(&self, msg: &[u8]) -> Result<Vec<u8>, CesrError> {
         let sk = SecretKey::from_bytes(&self.key)?;
         let pk = ed25519_dalek::PublicKey::from(&sk);
         Ok(ExpandedSecretKey::from(&sk)
@@ -115,7 +114,7 @@ fn libsodium_to_ed25519_dalek_compat() {
     let sodium_sig = sign::sign(msg, &sodium_sk);
 
     assert!(sign::verify_detached(
-        &sign::ed25519::Signature::new(dalek_sig.to_bytes()),
+        &sign::ed25519::Signature::from_bytes(&dalek_sig.to_bytes()).unwrap(),
         msg,
         &sodium_pk
     ));
@@ -123,7 +122,7 @@ fn libsodium_to_ed25519_dalek_compat() {
     assert!(kp
         .verify(
             msg,
-            &Signature::new(arrayref::array_ref!(sodium_sig, 0, 64).to_owned())
+            &Signature::from_bytes(&arrayref::array_ref!(sodium_sig, 0, 64).to_owned()).unwrap()
         )
         .is_ok());
 }

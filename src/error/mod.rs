@@ -1,6 +1,7 @@
 use base64::DecodeError;
 use core::num::ParseIntError;
 use ed25519_dalek;
+use nom::error::ErrorKind;
 use rmp_serde as serde_mgpk;
 use serde_cbor;
 use serde_json;
@@ -9,7 +10,7 @@ use thiserror::Error;
 pub mod serializer_error;
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum CesrError {
     #[error("Error during Serialization: {0}")]
     SerializationError(String),
 
@@ -107,4 +108,48 @@ pub enum Error {
     #[cfg(feature = "query")]
     #[error(transparent)]
     QueryError(#[from] crate::query::QueryError),
+
+    #[error("Nom error")]
+    StreamDeserializationError(nom::error::ErrorKind),
+
+    #[error("Data type support is not implemented yet")]
+    NotImplementedError,
+
+    #[error("Empty bytes stream passed for parsing")]
+    EmptyBytesStream,
+
+    #[error("Requested variant does not exists")]
+    NotExist,
+
+    #[error("Invalid library state")]
+    InvalidState,
+
+    #[error("Incomplete")]
+    Incomplete(usize),
 }
+
+impl<I> From<(I, nom::error::ErrorKind)> for CesrError {
+    fn from((_, kind): (I, nom::error::ErrorKind)) -> CesrError {
+        CesrError::StreamDeserializationError(kind)
+    }
+}
+
+impl<E> From<nom::Err<E>> for CesrError {
+    fn from(_: nom::Err<E>) -> CesrError {
+        CesrError::StreamDeserializationError(ErrorKind::IsNot)
+    }
+}
+
+impl From<std::str::Utf8Error> for CesrError {
+    fn from(err: std::str::Utf8Error) -> CesrError {
+        CesrError::DeserializeError(err.to_string())
+    }
+}
+
+impl From<std::string::FromUtf8Error> for CesrError {
+    fn from(err: std::string::FromUtf8Error) -> CesrError {
+        CesrError::DeserializeError(err.to_string())
+    }
+}
+
+pub type CesrResult<T> = std::result::Result<T, CesrError>;

@@ -1,5 +1,5 @@
 use super::{self_signing::SelfSigning, DerivationCode};
-use crate::error::Error;
+use crate::error::CesrError;
 use base64::{decode_config, encode_config};
 use core::str::FromStr;
 
@@ -48,7 +48,7 @@ impl DerivationCode for AttachedSignatureCode {
 }
 
 impl FromStr for AttachedSignatureCode {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s[..1] {
@@ -65,16 +65,18 @@ impl FromStr for AttachedSignatureCode {
                     SelfSigning::Ed448,
                     b64_to_num(&s.as_bytes()[3..4])?,
                 )),
-                _ => Err(Error::DeserializeError("Unknows signature code".into())),
+                _ => Err(CesrError::DeserializeError("Unknows signature code".into())),
             },
-            _ => Err(Error::DeserializeError("Unknown attachment code".into())),
+            _ => Err(CesrError::DeserializeError(
+                "Unknown attachment code".into(),
+            )),
         }
     }
 }
 
 // returns the u16 from the lowest 2 bytes of the b64 string
 // currently only works for strings 4 chars or less
-pub fn b64_to_num(b64: &[u8]) -> Result<u16, Error> {
+pub fn b64_to_num(b64: &[u8]) -> Result<u16, CesrError> {
     let slice = decode_config(
         match b64.len() {
             1 => [r"AAA".as_bytes(), b64].concat(),
@@ -83,7 +85,7 @@ pub fn b64_to_num(b64: &[u8]) -> Result<u16, Error> {
         },
         base64::URL_SAFE,
     )
-    .map_err(|e| Error::Base64DecodingError { source: e })?;
+    .map_err(|e| CesrError::Base64DecodingError { source: e })?;
     let len = slice.len();
 
     Ok(u16::from_be_bytes(match len {

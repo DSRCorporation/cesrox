@@ -1,6 +1,6 @@
 use super::Prefix;
 use crate::{
-    error::Error,
+    error::CesrError,
     keys::{PrivateKey, PublicKey},
 };
 use base64::decode_config;
@@ -17,7 +17,7 @@ pub enum SeedPrefix {
 }
 
 impl SeedPrefix {
-    pub fn derive_key_pair(&self) -> Result<(PublicKey, PrivateKey), Error> {
+    pub fn derive_key_pair(&self) -> Result<(PublicKey, PrivateKey), CesrError> {
         match self {
             Self::RandomSeed256Ed25519(seed) => {
                 let secret = SecretKey::from_bytes(seed)?;
@@ -33,13 +33,13 @@ impl SeedPrefix {
                     PrivateKey::new(sk.to_bytes().to_vec()),
                 ))
             }
-            _ => Err(Error::ImproperPrefixType),
+            _ => Err(CesrError::ImproperPrefixType),
         }
     }
 }
 
 impl FromStr for SeedPrefix {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s[..1] {
@@ -60,12 +60,12 @@ impl FromStr for SeedPrefix {
                     &s[2..],
                     base64::URL_SAFE,
                 )?)),
-                _ => Err(Error::DeserializeError(format!(
+                _ => Err(CesrError::DeserializeError(format!(
                     "Unknown seed prefix cod: {}",
                     s
                 ))),
             },
-            _ => Err(Error::DeserializeError(format!(
+            _ => Err(CesrError::DeserializeError(format!(
                 "Unknown seed prefix cod: {}",
                 s
             ))),
@@ -74,12 +74,12 @@ impl FromStr for SeedPrefix {
 }
 
 impl Prefix for SeedPrefix {
-    fn derivative(&self) -> Vec<u8> {
+    fn derivative(&self) -> &[u8] {
         match self {
-            Self::RandomSeed256Ed25519(seed) => seed.to_owned(),
-            Self::RandomSeed256ECDSAsecp256k1(seed) => seed.to_owned(),
-            Self::RandomSeed448(seed) => seed.to_owned(),
-            Self::RandomSeed128(seed) => seed.to_owned(),
+            Self::RandomSeed256Ed25519(seed) => seed.as_slice(),
+            Self::RandomSeed256ECDSAsecp256k1(seed) => seed.as_slice(),
+            Self::RandomSeed448(seed) => seed.as_slice(),
+            Self::RandomSeed128(seed) => seed.as_slice(),
         }
     }
     fn derivation_code(&self) -> String {
@@ -93,7 +93,7 @@ impl Prefix for SeedPrefix {
 }
 
 #[test]
-fn test_derive_keypair() -> Result<(), Error> {
+fn test_derive_keypair() -> Result<(), CesrError> {
     use base64::URL_SAFE;
 
     // taken from KERIPY: tests/core/test_eventing.py#1512

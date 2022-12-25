@@ -3,7 +3,7 @@ use crate::{
     derivation::{
         attached_signature_code::AttachedSignatureCode, self_signing::SelfSigning, DerivationCode,
     },
-    error::Error,
+    error::CesrError,
 };
 use base64::decode_config;
 use core::str::FromStr;
@@ -25,7 +25,7 @@ impl AttachedSignaturePrefix {
 }
 
 impl FromStr for AttachedSignaturePrefix {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let code = AttachedSignatureCode::from_str(s)?;
@@ -37,7 +37,7 @@ impl FromStr for AttachedSignaturePrefix {
                 code.index,
             ))
         } else {
-            Err(Error::SemanticError(format!(
+            Err(CesrError::SemanticError(format!(
                 "Incorrect Prefix Length: {}",
                 s
             )))
@@ -46,8 +46,8 @@ impl FromStr for AttachedSignaturePrefix {
 }
 
 impl Prefix for AttachedSignaturePrefix {
-    fn derivative(&self) -> Vec<u8> {
-        self.signature.signature.to_vec()
+    fn derivative(&self) -> &[u8] {
+        self.signature.signature.as_slice()
     }
     fn derivation_code(&self) -> String {
         AttachedSignatureCode::new(self.signature.derivation, self.index).to_str()
@@ -82,7 +82,7 @@ mod tests {
     use crate::derivation::self_signing::SelfSigning;
 
     #[test]
-    fn deserialize() -> Result<(), Error> {
+    fn deserialize() -> Result<(), CesrError> {
         let attached_ed_1 = "ABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         let attached_secp_2 = "BCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         let attached_448_3 = "0AADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -105,7 +105,7 @@ mod tests {
     }
 
     #[test]
-    fn serialize() -> Result<(), Error> {
+    fn serialize() -> Result<(), CesrError> {
         let pref_ed_2 = AttachedSignaturePrefix::new(SelfSigning::Ed25519Sha512, vec![0u8; 64], 2);
         let pref_secp_6 =
             AttachedSignaturePrefix::new(SelfSigning::ECDSAsecp256k1Sha256, vec![0u8; 64], 6);

@@ -1,5 +1,5 @@
 use super::DerivationCode;
-use crate::{error::Error, prefix::SelfAddressingPrefix};
+use crate::{error::CesrError, prefix::SelfAddressingPrefix};
 use blake2::{Blake2b, Digest, VarBlake2b, VarBlake2s};
 use blake3;
 use core::str::FromStr;
@@ -88,12 +88,12 @@ impl DerivationCode for SelfAddressing {
 }
 
 impl FromStr for SelfAddressing {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s
             .get(..1)
-            .ok_or_else(|| Error::DeserializeError("Empty prefix".into()))?
+            .ok_or_else(|| CesrError::DeserializeError("Empty prefix".into()))?
         {
             "E" => Ok(Self::Blake3_256),
             "F" => Ok(Self::Blake2B256(vec![])),
@@ -105,9 +105,9 @@ impl FromStr for SelfAddressing {
                 "E" => Ok(Self::SHA3_512),
                 "F" => Ok(Self::Blake2B512),
                 "G" => Ok(Self::SHA2_512),
-                _ => Err(Error::DeserializeError("Unknown hash code".into())),
+                _ => Err(CesrError::DeserializeError("Unknown hash code".into())),
             },
-            _ => Err(Error::DeserializeError(
+            _ => Err(CesrError::DeserializeError(
                 "Unknown hash algorithm code".into(),
             )),
         }
@@ -176,8 +176,6 @@ fn sha2_512_digest(input: &[u8]) -> Vec<u8> {
 mod self_addressing_tests {
     use crate::derivation::self_addressing::SelfAddressing;
     use crate::prefix::Prefix;
-    use base64::URL_SAFE;
-    use std::str;
 
     #[test]
     fn test_self_addressing() {

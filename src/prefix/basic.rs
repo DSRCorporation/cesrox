@@ -1,7 +1,7 @@
 use super::{verify, Prefix, SelfSigningPrefix};
 use crate::{
     derivation::{basic::Basic, DerivationCode},
-    error::Error,
+    error::CesrError,
     keys::PublicKey,
 };
 use base64::decode_config;
@@ -22,7 +22,7 @@ impl BasicPrefix {
         }
     }
 
-    pub fn verify(&self, data: &[u8], signature: &SelfSigningPrefix) -> Result<bool, Error> {
+    pub fn verify(&self, data: &[u8], signature: &SelfSigningPrefix) -> Result<bool, CesrError> {
         verify(data, self, signature)
     }
 }
@@ -34,7 +34,7 @@ impl PartialEq for BasicPrefix {
 }
 
 impl FromStr for BasicPrefix {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let code = Basic::from_str(s)?;
@@ -44,7 +44,7 @@ impl FromStr for BasicPrefix {
                 decode_config(&s[code.code_len()..code.prefix_b64_len()], base64::URL_SAFE)?;
             Ok(Self::new(code, PublicKey::new(k_vec)))
         } else {
-            Err(Error::SemanticError(format!(
+            Err(CesrError::SemanticError(format!(
                 "Incorrect Prefix Length: {}",
                 s
             )))
@@ -53,7 +53,7 @@ impl FromStr for BasicPrefix {
 }
 
 impl Prefix for BasicPrefix {
-    fn derivative(&self) -> Vec<u8> {
+    fn derivative(&self) -> &[u8] {
         self.public_key.key()
     }
     fn derivation_code(&self) -> String {

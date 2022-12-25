@@ -1,5 +1,5 @@
 use super::DerivationCode;
-use crate::{error::Error, prefix::SelfSigningPrefix};
+use crate::{error::CesrError, prefix::SelfSigningPrefix};
 use core::str::FromStr;
 
 /// Self Signing Derivations
@@ -44,27 +44,27 @@ impl DerivationCode for SelfSigning {
 }
 
 impl FromStr for SelfSigning {
-    type Err = Error;
+    type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s
             .get(..1)
-            .ok_or_else(|| Error::DeserializeError("Empty prefix".into()))?
+            .ok_or_else(|| CesrError::DeserializeError("Empty prefix".into()))?
         {
             "0" => match &s[1..2] {
                 "B" => Ok(Self::Ed25519Sha512),
                 "C" => Ok(Self::ECDSAsecp256k1Sha256),
-                _ => Err(Error::DeserializeError(
+                _ => Err(CesrError::DeserializeError(
                     "Unknown signature type code".into(),
                 )),
             },
             "1" => match &s[1..4] {
                 "AAE" => Ok(Self::Ed448),
-                _ => Err(Error::DeserializeError(
+                _ => Err(CesrError::DeserializeError(
                     "Unknown signature type code".into(),
                 )),
             },
-            _ => Err(Error::DeserializeError(format!(
+            _ => Err(CesrError::DeserializeError(format!(
                 "Unknown master code: {}",
                 s
             ))),
