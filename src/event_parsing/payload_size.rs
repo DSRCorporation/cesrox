@@ -91,7 +91,7 @@ pub enum PayloadType {
 }
 
 impl PayloadType {
-    pub(crate) fn _size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         match self {
             Self::A
             | Self::B
@@ -117,7 +117,7 @@ impl PayloadType {
         }
     }
 
-    pub(crate) fn _master_code_size(&self, qb2: bool) -> usize {
+    pub(crate) fn master_code_size(&self, qb2: bool) -> usize {
         match self {
             Self::A
             | Self::B

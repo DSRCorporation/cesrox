@@ -3,6 +3,8 @@ use nom::multi::many0;
 use serde::de::DeserializeOwned;
 use serde_json::{self, Value};
 
+use crate::event_parsing::payload_size::PayloadType;
+use crate::event_parsing::{pack_counter, pack_sn};
 use crate::prefix::Prefix;
 use crate::{
     error::{CesrError, CesrResult},
@@ -60,18 +62,71 @@ pub enum CesrMessage {
 
 impl CesrMessage {
     pub fn to_stream(&self) -> CesrResult<Vec<u8>> {
+        Ok(self.to_str().as_bytes().to_vec())
+    }
+
+    pub fn to_str(&self) -> String {
         match self {
-            CesrMessage::BasicPrefix(prefix) => Ok(prefix.to_str().as_bytes().to_vec()),
-            CesrMessage::SelfSigning(self_signing) => Ok(self_signing.to_str().as_bytes().to_vec()),
-            CesrMessage::SelfAddressing(self_addressing) => {
-                Ok(self_addressing.to_str().as_bytes().to_vec())
+            CesrMessage::BasicPrefix(prefix) => prefix.to_str(),
+            CesrMessage::SelfSigning(self_signing) => self_signing.to_str(),
+            CesrMessage::SelfAddressing(self_addressing) => self_addressing.to_str(),
+            CesrMessage::SealSourceCouplets(sources) => {
+                let serialized_sources = sources.iter().fold("".into(), |acc, s| {
+                    [acc, pack_sn(s.sn), s.digest.to_str()].join("")
+                });
+                pack_counter(PayloadType::MG, sources.len(), serialized_sources)
             }
-            CesrMessage::SealSourceCouplets(_seal_source_couples) => unimplemented!(),
-            CesrMessage::AttachedSignatures(_attached_signatures) => unimplemented!(),
-            CesrMessage::ReceiptCouplets(_receipt_couples) => unimplemented!(),
-            CesrMessage::SealSignaturesGroups(_seal_signature_groups) => unimplemented!(),
-            CesrMessage::LastEstSignaturesGroups(_last_est_signatures_groups) => unimplemented!(),
-            CesrMessage::Frame(_frame) => unimplemented!(),
+            CesrMessage::AttachedSignatures(sigs) => {
+                let serialized_sigs = sigs
+                    .iter()
+                    .fold("".into(), |acc, sig| [acc, sig.to_str()].join(""));
+                pack_counter(PayloadType::MA, sigs.len(), serialized_sigs)
+            }
+            CesrMessage::ReceiptCouplets(couplets) => {
+                let packed_couplets = couplets.iter().fold("".into(), |acc, (bp, sp)| {
+                    [acc, bp.to_str(), sp.to_str()].join("")
+                });
+                pack_counter(PayloadType::MC, couplets.len(), packed_couplets)
+            }
+            CesrMessage::SealSignaturesGroups(seals_signatures) => {
+                let serialized_seals =
+                    seals_signatures
+                        .iter()
+                        .fold("".into(), |acc, (seal, sigs)| {
+                            [
+                                acc,
+                                seal.prefix.to_str(),
+                                pack_sn(seal.sn),
+                                seal.event_digest.to_str(),
+                                // TODO: avoid cloning here
+                                CesrMessage::AttachedSignatures(sigs.to_vec()).to_str(),
+                            ]
+                            .join("")
+                        });
+                pack_counter(PayloadType::MF, seals_signatures.len(), serialized_seals)
+            }
+            CesrMessage::LastEstSignaturesGroups(signers) => {
+                let packed_signers = signers.iter().fold("".to_string(), |acc, (signer, sigs)| {
+                    [
+                        acc,
+                        signer.to_str(),
+                        // TODO: avoid cloning here
+                        CesrMessage::AttachedSignatures(sigs.clone()).to_str(),
+                    ]
+                    .concat()
+                });
+                pack_counter(PayloadType::MH, signers.len(), packed_signers)
+            }
+            CesrMessage::Frame(att) => {
+                let packed_attachments = att
+                    .iter()
+                    .fold("".to_string(), |acc, att| [acc, att.to_str()].concat());
+                pack_counter(
+                    PayloadType::MV,
+                    packed_attachments.len(),
+                    packed_attachments,
+                )
+            }
         }
     }
 }
@@ -255,7 +310,7 @@ pub mod tests {
 
     #[test]
     pub fn test_parse_mixed_stream_into_message_list() {
-        let stream = br#"{"name": "Cesr"}-GAC0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII{"surname": "Parse"}"#;
+        let stream = br#"{"name":"Cesr"}-GAC0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII{"surname":"Parse"}"#;
 
         let (rest, messages): (&[u8], Vec<Message>) = MessageList::from_stream(stream).unwrap();
 
@@ -316,4 +371,19 @@ pub mod tests {
         let message = message.custom_typed_message::<TestMessage>().unwrap();
         assert_eq!("Test".to_string(), message.name);
     }
+}
+
+#[test]
+pub fn test_serialize_mixed_message_list() {
+    let stream = br#"{"name":"Cesr"}-GAC0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII{"surname":"Parse"}"#;
+
+    let (_rest, messages): (&[u8], Vec<Message>) = MessageList::from_stream(stream).unwrap();
+
+    let message_list = MessageList(messages);
+
+    let serialized = message_list.to_stream().unwrap();
+    assert_eq!(
+        std::str::from_utf8(stream),
+        std::str::from_utf8(&serialized)
+    );
 }
