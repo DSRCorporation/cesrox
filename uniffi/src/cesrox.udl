@@ -1,0 +1,69 @@
+[Error]
+enum CesrError {
+    "SerializationError",
+    "JSONSerializationError",
+    "CBORSerializationError",
+    "MsgPackSerializationError",
+    "IntegerParseValue",
+    "SemanticError",
+    "FaultySignatureVerification",
+    "EventOutOfOrderError",
+    "EventDuplicateError",
+    "NotEnoughSigsError",
+    "SignatureVerificationError",
+    "DeserializeError",
+    "NotIndexedError",
+    "IdentifierPresentError",
+    "Base64DecodingError",
+    "ImproperPrefixType",
+    "StorageError",
+    "InvalidIdentifierStat",
+    "MutArcKeyVaultError",
+    "Ed25519DalekSignatureError",
+    "MutexPoisoned",
+    "IncorrectDigest",
+    "StreamDeserializationError",
+    "NotImplementedError",
+    "EmptyBytesStream",
+    "NotExist",
+    "InvalidState",
+    "Incomplete",
+};
+
+interface BasicPrefix {
+  [Name=from_str, Throws=CesrError]
+  constructor([ByRef] string s);
+  string to_str();
+};
+
+interface SelfAdressingPrefix {
+  [Name=from_str, Throws=CesrError]
+  constructor([ByRef] string s);
+  string to_str();
+};
+
+interface SelfSigningPrefix {
+  [Name=from_str, Throws=CesrError]
+  constructor([ByRef] string s);
+  string to_str();
+};
+
+enum Message {
+  "CustomMessage",
+  "CesrMessage", 
+};
+
+dictionary FFIMessageListReturn {
+  u64 rest;
+  sequence<Message> list;
+};
+
+
+interface MessageList {
+  [Throws=CesrError]
+  sequence<u8> to_stream();
+};
+
+namespace cesrox {
+  FFIMessageListReturn list_from_vec(sequence<u8> bytes);
+};

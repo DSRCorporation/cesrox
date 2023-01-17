@@ -189,6 +189,11 @@ impl Message {
 
 pub struct MessageList(pub(crate) Vec<Message>);
 
+pub struct FFIMessageListReturn {
+    pub rest: u64,
+    pub list: Vec<Message>,
+}
+
 impl MessageList {
     pub fn value(&self) -> &Vec<Message> {
         &self.0
@@ -209,6 +214,14 @@ impl MessageList {
             .flatten()
             .collect())
     }
+}
+
+pub fn list_from_vec(bytes: &Vec<u8>) -> CesrResult<FFIMessageListReturn> {
+    let (rest, messages) = MessageList::from_stream(bytes).unwrap();
+    return Ok(FFIMessageListReturn {
+        rest: rest.len().try_into().unwrap(),
+        list: messages,
+    });
 }
 
 #[cfg(test)]

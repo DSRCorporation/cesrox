@@ -1,0 +1,24 @@
+[package]
+name = "cesrox-uniffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies.cesrox_core]
+path = '..'
+features = ['uniffi']
+package = "cesrox"
+
+[dev-dependencies.cesrox_core]
+path = '..'
+features = ['uniffi']
+package = "cesrox"
+
+[dependencies]
+uniffi = { version="0.22", features=["builtin-bindgen"] }
+uniffi_macros = "0.22"
+
+[build-dependencies]
+uniffi_build = { version="0.22", features=["builtin-bindgen"] }

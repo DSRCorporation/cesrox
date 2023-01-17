@@ -1,4 +1,5 @@
 /target
+/uniffi/target
 Cargo.lock
 
 # editor files
