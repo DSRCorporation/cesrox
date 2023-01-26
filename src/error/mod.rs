@@ -153,3 +153,14 @@ impl From<std::string::FromUtf8Error> for CesrError {
 }
 
 pub type CesrResult<T> = std::result::Result<T, CesrError>;
+
+pub trait ToResult<T> {
+    fn to_cesr(self) -> CesrResult<T>;
+}
+
+impl<T> ToResult<T> for serde_json::Result<T> {
+    fn to_cesr(self) -> CesrResult<T>
+    {
+        self.map_err(|e| e.into())
+    }
+}

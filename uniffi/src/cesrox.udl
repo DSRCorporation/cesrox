@@ -30,13 +30,29 @@ enum CesrError {
     "Incomplete",
 };
 
+enum Basic {
+    "ECDSAsecp256k1NT",
+    "ECDSAsecp256k1",
+    "Ed25519NT",
+    "Ed25519",
+    "Ed448NT",
+    "Ed448",
+    "X25519",
+    "X448",
+};
+
+dictionary BasicPrefix {
+  Basic derivation;
+  string key;
+};
+
 interface BasicPrefix {
   [Name=from_str, Throws=CesrError]
   constructor([ByRef] string s);
   string to_str();
 };
 
-interface SelfAdressingPrefix {
+interface SelfAddressingPrefix {
   [Name=from_str, Throws=CesrError]
   constructor([ByRef] string s);
   string to_str();
@@ -48,16 +64,51 @@ interface SelfSigningPrefix {
   string to_str();
 };
 
-enum Message {
-  "CustomMessage",
-  "CesrMessage", 
+interface CesrMessage {
+  [Name=from_str, Throws=CesrError]
+  constructor([ByRef] string s);
+  string to_str();
 };
 
-dictionary FFIMessageListReturn {
-  u64 rest;
-  sequence<Message> list;
+[Custom]
+typedef string CustomMessage;
+
+enum CesrMessage {
+  "BasicPrefix",
+  "SelfAddressingPrefix",
+  "SelfSigningPrefix",
 };
 
+[Enum]
+interface Message {
+  CustomMessage(CustomMessage value);
+  CesrMessage(CesrMessage value);
+};
+
+// enum Message {
+//   "CustomMessage",
+//   "CesrMessage",
+// };
+
+// dictionary FFIMessageListReturn {
+//   u64 rest;
+//   sequence<Message> list;
+// };
+
+dictionary TypeOneType {
+  u8 value;
+};
+
+dictionary TypeTwoType {
+  u8 one;
+  string two;
+};
+
+[Enum]
+interface TestEnum {
+  TypeOne(TypeOneType value);
+  TypeTwo(TypeTwoType value);
+};
 
 interface MessageList {
   [Throws=CesrError]
@@ -65,6 +116,6 @@ interface MessageList {
 };
 
 namespace cesrox {
-  [Throws=CesrError]
-  FFIMessageListReturn parse_message_list([ByRef] sequence<u8> bytes);
+  // [Throws=CesrError]
+  // FFIMessageListReturn parse_message_list([ByRef] sequence<u8> bytes);
 };
