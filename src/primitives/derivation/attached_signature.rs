@@ -1,19 +1,20 @@
-use super::{self_signing::SelfSigning, DerivationCode};
-use crate::error::CesrError;
+use crate::error::{CesrError, CesrResult};
 use base64::{decode_config, encode_config};
 use core::str::FromStr;
+use crate::primitives::derivation::{DerivationCode, SelfSigningCode};
+use crate::utils::nom::take_bytes;
 
 /// Attached Signature Derivation Codes
 ///
-/// A self signing prefix derivation outputs a signature as its derivative (2.3.5)
+/// A self signing prefix primitives.derivation outputs a signature as its derivative (2.3.5)
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct AttachedSignatureCode {
     pub index: u16,
-    pub code: SelfSigning,
+    pub code: SelfSigningCode,
 }
 
 impl AttachedSignatureCode {
-    pub fn new(code: SelfSigning, index: u16) -> Self {
+    pub fn new(code: SelfSigningCode, index: u16) -> Self {
         Self { index, code }
     }
 }
@@ -21,15 +22,15 @@ impl AttachedSignatureCode {
 impl DerivationCode for AttachedSignatureCode {
     fn code_len(&self) -> usize {
         match self.code {
-            SelfSigning::Ed25519Sha512 | SelfSigning::ECDSAsecp256k1Sha256 => 2,
-            SelfSigning::Ed448 => 4,
+            SelfSigningCode::Ed25519Sha512 | SelfSigningCode::ECDSAsecp256k1Sha256 => 2,
+            SelfSigningCode::Ed448 => 4,
         }
     }
 
     fn derivative_b64_len(&self) -> usize {
         match self.code {
-            SelfSigning::Ed25519Sha512 | SelfSigning::ECDSAsecp256k1Sha256 => 86,
-            SelfSigning::Ed448 => 152,
+            SelfSigningCode::Ed25519Sha512 | SelfSigningCode::ECDSAsecp256k1Sha256 => 86,
+            SelfSigningCode::Ed448 => 152,
         }
     }
 
@@ -37,9 +38,9 @@ impl DerivationCode for AttachedSignatureCode {
     fn to_str(&self) -> String {
         [
             match self.code {
-                SelfSigning::Ed25519Sha512 => "A",
-                SelfSigning::ECDSAsecp256k1Sha256 => "B",
-                SelfSigning::Ed448 => "0AA",
+                SelfSigningCode::Ed25519Sha512 => "A",
+                SelfSigningCode::ECDSAsecp256k1Sha256 => "B",
+                SelfSigningCode::Ed448 => "0AA",
             },
             &num_to_b64(self.index),
         ]
@@ -53,16 +54,16 @@ impl FromStr for AttachedSignatureCode {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s[..1] {
             "A" => Ok(Self::new(
-                SelfSigning::Ed25519Sha512,
+                SelfSigningCode::Ed25519Sha512,
                 b64_to_num(&s.as_bytes()[1..2])?,
             )),
             "B" => Ok(Self::new(
-                SelfSigning::ECDSAsecp256k1Sha256,
+                SelfSigningCode::ECDSAsecp256k1Sha256,
                 b64_to_num(&s.as_bytes()[1..2])?,
             )),
             "0" => match &s[1..3] {
                 "AA" => Ok(Self::new(
-                    SelfSigning::Ed448,
+                    SelfSigningCode::Ed448,
                     b64_to_num(&s.as_bytes()[3..4])?,
                 )),
                 _ => Err(CesrError::DeserializeError("Unknows signature code".into())),
@@ -76,7 +77,7 @@ impl FromStr for AttachedSignatureCode {
 
 // returns the u16 from the lowest 2 bytes of the b64 string
 // currently only works for strings 4 chars or less
-pub fn b64_to_num(b64: &[u8]) -> Result<u16, CesrError> {
+pub fn b64_to_num(b64: &[u8]) -> CesrResult<u16> {
     let slice = decode_config(
         match b64.len() {
             1 => [r"AAA".as_bytes(), b64].concat(),
@@ -93,6 +94,12 @@ pub fn b64_to_num(b64: &[u8]) -> Result<u16, CesrError> {
         1 => [0, slice[0]],
         _ => [slice[len - 2], slice[len - 1]],
     }))
+}
+
+pub(crate) fn b64_count<'a>(s: &[u8]) -> CesrResult<(&[u8], u16)> {
+    let (more, rest) = take_bytes(s, 2u8)?;
+    let bytes = b64_to_num(rest)?;
+    Ok((more, bytes))
 }
 
 pub fn num_to_b64(num: u16) -> String {
@@ -114,4 +121,14 @@ fn num_to_b64_test() {
     assert_eq!("b", num_to_b64(27));
     assert_eq!("AE", num_to_b64(64));
     assert_eq!("EAA", num_to_b64(4096));
+}
+
+#[test]
+fn test_b64_count() {
+    assert_eq!(b64_count("AA".as_bytes()).unwrap(), ("".as_bytes(), 0u16));
+    assert_eq!(b64_count("BA".as_bytes()).unwrap(), ("".as_bytes(), 64u16));
+    assert_eq!(
+        b64_count("ABextra data and stuff".as_bytes()).unwrap(),
+        ("extra data and stuff".as_bytes(), 1u16)
+    );
 }

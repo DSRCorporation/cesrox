@@ -1,5 +1,5 @@
-use crate::error::CesrError;
-use crate::{derivation::attached_signature_code::num_to_b64, error::CesrResult};
+use crate::error::{CesrError, CesrResult};
+use crate::primitives::derivation::attached_signature::num_to_b64;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt::Display};
 
@@ -7,7 +7,7 @@ use std::{convert::TryFrom, fmt::Display};
 // according to:
 // https://github.com/decentralized-identity/keri/blob/master/kids/kid0001.md#base64-master-code-table
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub enum PayloadType {
+pub enum Codes {
     A,
     B,
     C,
@@ -90,7 +90,7 @@ pub enum PayloadType {
     // TODO: Indexed signatures
 }
 
-impl PayloadType {
+impl Codes {
     pub(crate) fn size(&self) -> usize {
         match self {
             Self::A
@@ -208,7 +208,7 @@ impl PayloadType {
     }
 }
 
-impl TryFrom<&str> for PayloadType {
+impl TryFrom<&str> for Codes {
     type Error = CesrError;
     fn try_from(data: &str) -> CesrResult<Self> {
         match data {
@@ -259,7 +259,7 @@ impl TryFrom<&str> for PayloadType {
     }
 }
 
-impl Display for PayloadType {
+impl Display for Codes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::A => f.write_str("A"),
@@ -310,6 +310,6 @@ impl Display for PayloadType {
 
 #[test]
 fn test_adjust_with_num() {
-    assert_eq!(PayloadType::MA.adjust_with_num(2), "-AAC");
-    assert_eq!(PayloadType::MA.adjust_with_num(27), "-AAb");
+    assert_eq!(Codes::MA.adjust_with_num(2), "-AAC");
+    assert_eq!(Codes::MA.adjust_with_num(27), "-AAb");
 }

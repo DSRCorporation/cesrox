@@ -28,9 +28,10 @@ enum CesrError {
     "NotExist",
     "InvalidState",
     "Incomplete",
+    "TooMuch",
 };
 
-enum Basic {
+enum BasicCode {
     "ECDSAsecp256k1NT",
     "ECDSAsecp256k1",
     "Ed25519NT",
@@ -41,81 +42,110 @@ enum Basic {
     "X448",
 };
 
+dictionary Key {
+  sequence<u8> value;
+};
+
 dictionary BasicPrefix {
-  Basic derivation;
-  string key;
+  BasicCode derivation;
+  Key public_key;
 };
 
-interface BasicPrefix {
-  [Name=from_str, Throws=CesrError]
-  constructor([ByRef] string s);
-  string to_str();
+enum SelfSigningCode {
+    "Ed25519Sha512",
+    "ECDSAsecp256k1Sha256",
+    "Ed448",
 };
 
-interface SelfAddressingPrefix {
-  [Name=from_str, Throws=CesrError]
-  constructor([ByRef] string s);
-  string to_str();
-};
-
-interface SelfSigningPrefix {
-  [Name=from_str, Throws=CesrError]
-  constructor([ByRef] string s);
-  string to_str();
-};
-
-interface CesrMessage {
-  [Name=from_str, Throws=CesrError]
-  constructor([ByRef] string s);
-  string to_str();
-};
-
-[Custom]
-typedef string CustomMessage;
-
-enum CesrMessage {
-  "BasicPrefix",
-  "SelfAddressingPrefix",
-  "SelfSigningPrefix",
+dictionary SelfSigningPrefix {
+  SelfSigningCode derivation;
+  sequence<u8> signature;
 };
 
 [Enum]
-interface Message {
-  CustomMessage(CustomMessage value);
-  CesrMessage(CesrMessage value);
+interface SelfAddressingCode {
+    Blake3_256();
+    Blake2B256(sequence<u8> key);
+    Blake2S256(sequence<u8> key);
+    SHA3_256();
+    SHA2_256();
+    Blake3_512();
+    SHA3_512();
+    Blake2B512();
+    SHA2_512();
 };
 
-// enum Message {
-//   "CustomMessage",
-//   "CesrMessage",
-// };
-
-// dictionary FFIMessageListReturn {
-//   u64 rest;
-//   sequence<Message> list;
-// };
-
-dictionary TypeOneType {
-  u8 value;
+dictionary SelfAddressingPrefix {
+  SelfAddressingCode derivation;
+  sequence<u8> digest;
 };
 
-dictionary TypeTwoType {
-  u8 one;
-  string two;
+dictionary AttachedSignaturePrefix {
+  sequence<u8> signature;
+  u16 index;
+};
+
+dictionary IndexedControllerSignatures {
+  sequence<AttachedSignaturePrefix> value;
+};
+
+dictionary IndexedWitnessSignatures {
+  sequence<AttachedSignaturePrefix> value;
+};
+
+dictionary NontransferableIdentifierReceiptCouple {
+  BasicPrefix basic;
+  SelfSigningPrefix self_signing;
+};
+
+dictionary NontransferableIdentifierReceiptCouples {
+  sequence<NontransferableIdentifierReceiptCouple> value;
+};
+
+dictionary NontransferableIdentifierReceiptCouple {
+  BasicPrefix basic;
+  SelfSigningPrefix self_signing;
+};
+
+dictionary SourceSeal {
+  u64 sn;
+  SelfAddressingPrefix digest;
+};
+
+dictionary SealSourceCouplets {
+  sequence<SourceSeal> value;
 };
 
 [Enum]
-interface TestEnum {
-  TypeOne(TypeOneType value);
-  TypeTwo(TypeTwoType value);
+interface IdentifierPrefix {
+    BasicIdentifier(BasicPrefix value);
+    SelfAddressingIdentifier(SelfAddressingPrefix value);
+    SelfSigningIdentifier(SelfSigningPrefix value);
 };
 
-interface MessageList {
-  [Throws=CesrError]
-  sequence<u8> to_stream();
+dictionary EventSeal {
+  IdentifierPrefix prefix;
+  u64 sn;
+  SelfAddressingPrefix event_digest;
 };
 
-namespace cesrox {
-  // [Throws=CesrError]
-  // FFIMessageListReturn parse_message_list([ByRef] sequence<u8> bytes);
+dictionary TransferableIndexedSignatureGroup {
+  EventSeal event_seal;
+  sequence<AttachedSignaturePrefix> signature_prefixes;
 };
+
+dictionary TransferableIndexedSignatureGroups {
+  sequence<TransferableIndexedSignatureGroup> value;
+};
+
+dictionary LastEstSignaturesGroup {
+  IdentifierPrefix identifier_prefix;
+  sequence<AttachedSignaturePrefix> attached_signature_prefixes;
+};
+
+dictionary LastEstSignaturesGroups {
+  sequence<LastEstSignaturesGroup> value;
+};
+
+
+namespace cesrox {};

@@ -1,8 +1,6 @@
 use super::Prefix;
-use crate::{
-    error::CesrError,
-    keys::{PrivateKey, PublicKey},
-};
+use crate::error::CesrError;
+use crate::primitives::key::Key;
 use base64::decode_config;
 use core::str::FromStr;
 use ed25519_dalek::SecretKey;
@@ -17,24 +15,27 @@ pub enum SeedPrefix {
 }
 
 impl SeedPrefix {
-    pub fn derive_key_pair(&self) -> Result<(PublicKey, PrivateKey), CesrError> {
+    pub fn derive_key_pair(&self) -> Result<(Key, Key), CesrError> {
         match self {
             Self::RandomSeed256Ed25519(seed) => {
                 let secret = SecretKey::from_bytes(seed)?;
-                let vk =
-                    PublicKey::new(ed25519_dalek::PublicKey::from(&secret).as_bytes().to_vec());
-                let sk = PrivateKey::new(secret.as_bytes().to_vec());
+                let vk = Key::new(ed25519_dalek::PublicKey::from(&secret).as_bytes());
+                let sk = Key::new(secret.as_bytes());
                 Ok((vk, sk))
             }
             Self::RandomSeed256ECDSAsecp256k1(seed) => {
                 let sk = SigningKey::from_bytes(seed)?;
                 Ok((
-                    PublicKey::new(VerifyingKey::from(&sk).to_bytes().to_vec()),
-                    PrivateKey::new(sk.to_bytes().to_vec()),
+                    Key::new(&VerifyingKey::from(&sk).to_bytes()),
+                    Key::new(&sk.to_bytes().to_vec()),
                 ))
             }
             _ => Err(CesrError::ImproperPrefixType),
         }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.to_str().as_bytes().to_vec()
     }
 }
 
@@ -74,12 +75,12 @@ impl FromStr for SeedPrefix {
 }
 
 impl Prefix for SeedPrefix {
-    fn derivative(&self) -> &[u8] {
+    fn derivative(&self) -> Vec<u8> {
         match self {
-            Self::RandomSeed256Ed25519(seed) => seed.as_slice(),
-            Self::RandomSeed256ECDSAsecp256k1(seed) => seed.as_slice(),
-            Self::RandomSeed448(seed) => seed.as_slice(),
-            Self::RandomSeed128(seed) => seed.as_slice(),
+            Self::RandomSeed256Ed25519(seed) => seed.as_slice().to_vec(),
+            Self::RandomSeed256ECDSAsecp256k1(seed) => seed.as_slice().to_vec(),
+            Self::RandomSeed448(seed) => seed.as_slice().to_vec(),
+            Self::RandomSeed128(seed) => seed.as_slice().to_vec(),
         }
     }
     fn derivation_code(&self) -> String {
@@ -122,7 +123,7 @@ fn test_derive_keypair() -> Result<(), CesrError> {
     for (seed_str, expected_pk) in seeds.iter().zip(expected_pubkeys.iter()) {
         let seed: SeedPrefix = seed_str.parse()?;
         let (pub_key, _priv_key) = seed.derive_key_pair()?;
-        let b64_pubkey = base64::encode_config(pub_key.key(), URL_SAFE);
+        let b64_pubkey = base64::encode_config(pub_key.value(), URL_SAFE);
         assert_eq!(&b64_pubkey, expected_pk);
     }
 

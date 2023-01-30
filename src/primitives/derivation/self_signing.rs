@@ -1,24 +1,25 @@
 use super::DerivationCode;
-use crate::{error::CesrError, prefix::SelfSigningPrefix};
+use crate::error::CesrError;
+use crate::primitives::prefix::SelfSigningPrefix;
 use core::str::FromStr;
 
 /// Self Signing Derivations
 ///
-/// A self signing prefix derivation outputs a signature as its derivative (2.3.5)
+/// A self signing prefix primitives.derivation outputs a signature as its derivative (2.3.5)
 #[derive(Debug, PartialEq, Clone, Copy, Hash)]
-pub enum SelfSigning {
+pub enum SelfSigningCode {
     Ed25519Sha512,
     ECDSAsecp256k1Sha256,
     Ed448,
 }
 
-impl SelfSigning {
+impl SelfSigningCode {
     pub fn derive(&self, sig: Vec<u8>) -> SelfSigningPrefix {
         SelfSigningPrefix::new(*self, sig)
     }
 }
 
-impl DerivationCode for SelfSigning {
+impl DerivationCode for SelfSigningCode {
     fn code_len(&self) -> usize {
         match self {
             Self::Ed25519Sha512 | Self::ECDSAsecp256k1Sha256 => 2,
@@ -43,7 +44,7 @@ impl DerivationCode for SelfSigning {
     }
 }
 
-impl FromStr for SelfSigning {
+impl FromStr for SelfSigningCode {
     type Err = CesrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -74,18 +75,18 @@ impl FromStr for SelfSigning {
 
 #[cfg(test)]
 mod self_signing_tests {
-    use crate::derivation::self_signing::SelfSigning;
-    use crate::prefix::Prefix;
+    use crate::primitives::prefix::Prefix;
+    use super::*;
 
     #[test]
     fn test_self_signing() {
-        let der = SelfSigning::Ed25519Sha512.derive(vec![0; 64]);
+        let der = SelfSigningCode::Ed25519Sha512.derive(vec![0; 64]);
         assert_eq!(der.to_str(), ["0B".to_string(), "A".repeat(86)].join(""));
 
-        let der = SelfSigning::ECDSAsecp256k1Sha256.derive(vec![0; 64]);
+        let der = SelfSigningCode::ECDSAsecp256k1Sha256.derive(vec![0; 64]);
         assert_eq!(der.to_str(), ["0C".to_string(), "A".repeat(86)].join(""));
 
-        let der = SelfSigning::Ed448.derive(vec![0; 114]);
+        let der = SelfSigningCode::Ed448.derive(vec![0; 114]);
         assert_eq!(der.to_str(), ["1AAE".to_string(), "A".repeat(152)].join(""));
     }
 }

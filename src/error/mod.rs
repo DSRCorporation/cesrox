@@ -7,8 +7,6 @@ use serde_cbor;
 use serde_json;
 use thiserror::Error;
 
-pub mod serializer_error;
-
 #[derive(Error, Debug)]
 pub enum CesrError {
     #[error("Error during Serialization: {0}")]
@@ -126,6 +124,9 @@ pub enum CesrError {
 
     #[error("Incomplete")]
     Incomplete(usize),
+
+    #[error("Too much data")]
+    TooMuch,
 }
 
 impl<I> From<(I, nom::error::ErrorKind)> for CesrError {
@@ -159,8 +160,7 @@ pub trait ToResult<T> {
 }
 
 impl<T> ToResult<T> for serde_json::Result<T> {
-    fn to_cesr(self) -> CesrResult<T>
-    {
+    fn to_cesr(self) -> CesrResult<T> {
         self.map_err(|e| e.into())
     }
 }
