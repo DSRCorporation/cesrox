@@ -142,7 +142,6 @@ mod test {
         use rand::rngs::OsRng;
 
         let kp = Keypair::generate(&mut OsRng);
-        println!("{:?}", kp.public.to_bytes());
 
         let bp = BasicPrefix {
             derivation: BasicCode::Ed25519,

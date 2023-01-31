@@ -112,7 +112,6 @@ impl EventSeal {
             sn: sn.value,
             event_digest,
         };
-        println!("EventSeal 3");
         Ok((rest, seal))
     }
 }
