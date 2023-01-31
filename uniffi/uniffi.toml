@@ -1,2 +1,2 @@
 [bindings.kotlin]
-cdylib_name = "cesrox"
+cdylib_name = "cesrox_uniffi"
