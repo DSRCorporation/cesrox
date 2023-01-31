@@ -6,20 +6,19 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[[bin]]
+# This can be whatever name makes sense for your project, but the rest of this tutorial assumes uniffi-bindgen.
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
 [dependencies.cesrox_core]
 path = '..'
-features = ['uniffi']
-package = "cesrox"
-
-[dev-dependencies.cesrox_core]
-path = '..'
-features = ['uniffi']
 package = "cesrox"
 
 [dependencies]
-uniffi = { version="0.22", features=["builtin-bindgen"] }
+uniffi = { version="0.23" }
 uniffi_macros = "0.22"
 serde_json = "1.0"
 
 [build-dependencies]
-uniffi_build = { version="0.22", features=["builtin-bindgen"] }
+uniffi = { version = "0.23", features = [ "build" ] }

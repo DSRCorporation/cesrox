@@ -29,15 +29,7 @@ rand = { version = "0.7.3", features = ["std", "getrandom"] }
 nom = "5"
 num-derive = "0.3.3"
 num-traits = "0.2"
-uniffi = "0.22"
-uniffi_macros = "0.22"
 
 [dev-dependencies]
 tempfile = "3.1"
 sodiumoxide = "0.2.6"
-
-[build-dependencies]
-uniffi_build = "0.22"
-
-[features]
-uniffi = []

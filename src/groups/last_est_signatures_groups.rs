@@ -28,12 +28,14 @@ impl LastEstSignaturesGroups {
                 acc,
                 item.identifier_prefix.to_str(),
                 // TODO: avoid cloning here
-                CesrGroup::IndexedControllerSignatures(IndexedControllerSignatures {
-                    value: item.attached_signature_prefixes.clone(),
-                })
-                .to_str(),
+                CesrGroup::IndexedControllerSignaturesVariant {
+                    value: IndexedControllerSignatures {
+                        value: item.attached_signature_prefixes.clone(),
+                    }
+                }
+                    .to_str(),
             ]
-            .concat()
+                .concat()
         });
         Counter::new(Codes::MH, self.value.len(), data).pack()
     }
@@ -46,7 +48,7 @@ impl LastEstSignaturesGroups {
         self.to_str().as_bytes().to_vec()
     }
 
-    pub fn from_bytes<'a>(s: &'a[u8]) -> CesrResult<Self> {
+    pub fn from_bytes<'a>(s: &'a [u8]) -> CesrResult<Self> {
         let (rest, parsed) = Self::from_stream_bytes(s)?;
         if !rest.is_empty() {
             return Err(CesrError::NotImplementedError);
@@ -80,8 +82,8 @@ impl FromStr for LastEstSignaturesGroups {
 
 impl Serialize for LastEstSignaturesGroups {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -89,8 +91,8 @@ impl Serialize for LastEstSignaturesGroups {
 
 impl<'de> Deserialize<'de> for LastEstSignaturesGroups {
     fn deserialize<D>(deserializer: D) -> Result<LastEstSignaturesGroups, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
 
@@ -100,8 +102,8 @@ impl<'de> Deserialize<'de> for LastEstSignaturesGroups {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LastEstSignaturesGroup {
-    identifier_prefix: IdentifierPrefix,
-    attached_signature_prefixes: Vec<AttachedSignaturePrefix>,
+    pub identifier_prefix: IdentifierPrefix,
+    pub attached_signature_prefixes: Vec<AttachedSignaturePrefix>,
 }
 
 impl LastEstSignaturesGroup {

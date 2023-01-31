@@ -1,8 +1,8 @@
-use zeroize::Zeroize;
+// use zeroize::Zeroize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Key {
-    value: Vec<u8>,
+    pub value: Vec<u8>,
 }
 
 impl Key {
@@ -15,8 +15,9 @@ impl Key {
     }
 }
 
-impl Drop for Key {
-    fn drop(&mut self) {
-        self.value.zeroize()
-    }
-}
+// FIXME: restore the code
+// impl Drop for Key {
+//     fn drop(&mut self) {
+//         self.value.zeroize()
+//     }
+// }

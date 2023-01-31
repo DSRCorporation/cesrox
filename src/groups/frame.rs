@@ -41,7 +41,7 @@ impl Frame {
         self.to_str().as_bytes().to_vec()
     }
 
-    pub fn from_bytes<'a>(s: &'a[u8]) -> CesrResult<Self> {
+    pub fn from_bytes<'a>(s: &'a [u8]) -> CesrResult<Self> {
         let (rest, parsed) = Self::from_stream_bytes(s)?;
         if !rest.is_empty() {
             return Err(CesrError::NotImplementedError);
@@ -53,7 +53,7 @@ impl Frame {
         let (rest, sc) = b64_count(rest)?;
         // sc * 4 is all attachments length
         let (rest, total) = take_bytes(rest, sc * 4)?;
-        let (extra, atts) = match many0(nomify!(CesrGroup::from_bytes))(total) {
+        let (extra, atts) = match many0(nomify!(CesrGroup::from_stream_bytes))(total) {
             Ok((extra, atts)) => (extra, atts),
             Err(nom::Err::Error((rest, _))) => {
                 return Err(CesrError::Incomplete((sc * 4) as usize - rest.len()));
@@ -102,8 +102,8 @@ mod tests {
     #[test]
     fn test_parse_frame() {
         let cesr_attachment = "-VAj-HABE4YPqsEOaPNaZxVIbY-Gx2bJgP-c7AH_K7pEE-YfcI9E-AABAAMX88afPpEfF_HF-E-1uZKyv8b_TdILi2x8vC3Yi7Q7yzHn2fR6Bkl2yn-ZxPqmsTfV3f-H_VQwMgk7jYEukVCA";
-        let (rest, att) = CesrGroup::from_bytes(cesr_attachment.as_bytes()).unwrap();
+        let (rest, att) = CesrGroup::from_stream_bytes(cesr_attachment.as_bytes()).unwrap();
         assert!(rest.is_empty());
-        assert!(matches!(att, CesrGroup::Frame(_)));
+        assert!(matches!(att, CesrGroup::FrameVariant {..}));
     }
 }

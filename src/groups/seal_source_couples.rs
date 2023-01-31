@@ -35,7 +35,7 @@ impl SealSourceCouplets {
         self.to_str().as_bytes().to_vec()
     }
 
-    pub fn from_bytes<'a>(s: &'a[u8]) -> CesrResult<Self> {
+    pub fn from_bytes<'a>(s: &'a [u8]) -> CesrResult<Self> {
         let (rest, parsed) = Self::from_stream_bytes(s)?;
         if !rest.is_empty() {
             return Err(CesrError::NotImplementedError);
@@ -137,25 +137,27 @@ mod tests {
     #[test]
     fn test_parse_seal_source_couples() {
         let attached_str = "-GAC0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII0AAAAAAAAAAAAAAAAAAAAAAQE3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII";
-        let (_rest, group) = CesrGroup::from_bytes(attached_str.as_bytes()).unwrap();
+        let (_rest, group) = CesrGroup::from_stream_bytes(attached_str.as_bytes()).unwrap();
         assert_eq!(
             group,
-            CesrGroup::SealSourceCouplets(SealSourceCouplets {
-                value: vec![
-                    SourceSeal {
-                        sn: 1,
-                        digest: "E3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII"
-                            .parse()
-                            .unwrap(),
-                    },
-                    SourceSeal {
-                        sn: 1,
-                        digest: "E3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII"
-                            .parse()
-                            .unwrap(),
-                    },
-                ]
-            })
+            CesrGroup::SealSourceCoupletsVariant {
+                value: SealSourceCouplets {
+                    value: vec![
+                        SourceSeal {
+                            sn: 1,
+                            digest: "E3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII"
+                                .parse()
+                                .unwrap(),
+                        },
+                        SourceSeal {
+                            sn: 1,
+                            digest: "E3fUycq1G-P1K1pL2OhvY6ZU-9otSa3hXiCcrxuhjyII"
+                                .parse()
+                                .unwrap(),
+                        },
+                    ]
+                }
+            }
         );
     }
 }

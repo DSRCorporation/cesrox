@@ -13,14 +13,14 @@ use crate::primitives::derivation::attached_signature::b64_count;
 use crate::primitives::prefix::serial_number::SerialNumberPrefix;
 
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct TransferableIndexedSignatureGroups {
-    pub value: Vec<TransferableIndexedSignatureGroup>,
+pub struct TransferableIndexedSignaturesGroups {
+    pub value: Vec<TransferableIndexedSignaturesGroup>,
 }
 
-impl TransferableIndexedSignatureGroups {
+impl TransferableIndexedSignaturesGroups {
     pub fn new(
-        value: Vec<TransferableIndexedSignatureGroup>,
-    ) -> TransferableIndexedSignatureGroups {
+        value: Vec<TransferableIndexedSignaturesGroup>,
+    ) -> TransferableIndexedSignaturesGroups {
         Self { value }
     }
 
@@ -32,9 +32,11 @@ impl TransferableIndexedSignatureGroups {
                 SerialNumberPrefix::to_str(group.event_seal.sn),
                 group.event_seal.event_digest.to_str(),
                 // TODO: avoid cloning here
-                CesrGroup::IndexedControllerSignatures(IndexedControllerSignatures::new(
-                    group.signature_prefixes.to_vec(),
-                ))
+                CesrGroup::IndexedControllerSignaturesVariant {
+                    value: IndexedControllerSignatures::new(
+                        group.signature_prefixes.to_vec(),
+                    )
+                }
                     .to_str(),
             ]
                 .join("")
@@ -50,7 +52,7 @@ impl TransferableIndexedSignatureGroups {
         self.to_str().as_bytes().to_vec()
     }
 
-    pub fn from_bytes<'a>(s: &'a[u8]) -> CesrResult<Self> {
+    pub fn from_bytes<'a>(s: &'a [u8]) -> CesrResult<Self> {
         let (rest, parsed) = Self::from_stream_bytes(s)?;
         if !rest.is_empty() {
             return Err(CesrError::NotImplementedError);
@@ -58,7 +60,7 @@ impl TransferableIndexedSignatureGroups {
         Ok(parsed)
     }
 
-    pub fn from_stream_bytes<'a>(s: &'a [u8]) -> CesrResult<(&[u8], TransferableIndexedSignatureGroups)> {
+    pub fn from_stream_bytes<'a>(s: &'a [u8]) -> CesrResult<(&[u8], TransferableIndexedSignaturesGroups)> {
         let (rest, sc) = b64_count(s)?;
         let (rest, parsed) = count(
             tuple((nomify!(EventSeal::from_stream_bytes), nomify!(IndexedControllerSignatures::from_stream_group_bytes))),
@@ -67,17 +69,17 @@ impl TransferableIndexedSignatureGroups {
         let signatures_groups = parsed
             .into_iter()
             .map(|(event_seal, signature)| {
-                TransferableIndexedSignatureGroup::new(event_seal, signature.value)
+                TransferableIndexedSignaturesGroup::new(event_seal, signature.value)
             })
             .collect();
         Ok((
             rest,
-            TransferableIndexedSignatureGroups::new(signatures_groups),
+            TransferableIndexedSignaturesGroups::new(signatures_groups),
         ))
     }
 }
 
-impl Serialize for TransferableIndexedSignatureGroups {
+impl Serialize for TransferableIndexedSignaturesGroups {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: Serializer,
@@ -86,28 +88,28 @@ impl Serialize for TransferableIndexedSignatureGroups {
     }
 }
 
-impl<'de> Deserialize<'de> for TransferableIndexedSignatureGroups {
-    fn deserialize<D>(deserializer: D) -> Result<TransferableIndexedSignatureGroups, D::Error>
+impl<'de> Deserialize<'de> for TransferableIndexedSignaturesGroups {
+    fn deserialize<D>(deserializer: D) -> Result<TransferableIndexedSignaturesGroups, D::Error>
         where
             D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
 
-        TransferableIndexedSignatureGroups::from_str(&s).map_err(serde::de::Error::custom)
+        TransferableIndexedSignaturesGroups::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TransferableIndexedSignatureGroup {
-    event_seal: EventSeal,
-    signature_prefixes: Vec<AttachedSignaturePrefix>,
+pub struct TransferableIndexedSignaturesGroup {
+    pub event_seal: EventSeal,
+    pub signature_prefixes: Vec<AttachedSignaturePrefix>,
 }
 
-impl TransferableIndexedSignatureGroup {
+impl TransferableIndexedSignaturesGroup {
     pub fn new(
         event_seal: EventSeal,
         signature_prefixes: Vec<AttachedSignaturePrefix>,
-    ) -> TransferableIndexedSignatureGroup {
+    ) -> TransferableIndexedSignaturesGroup {
         Self {
             event_seal,
             signature_prefixes,
@@ -117,20 +119,20 @@ impl TransferableIndexedSignatureGroup {
 
 #[cfg(test)]
 mod tests {
-    use crate::groups::{TransferableIndexedSignatureGroup, TransferableIndexedSignatureGroups};
+    use crate::groups::{TransferableIndexedSignaturesGroup, TransferableIndexedSignaturesGroups};
     use super::*;
 
     #[test]
     fn test_parse_signature_groups() {
         let attached_str = "-FABED9EB3sA5u2vCPOEmX3d7bEyHiSh7Xi8fjew2KMl3FQM0AAAAAAAAAAAAAAAAAAAAAAAEeGqW24EnxUgO_wfuFo6GR_vii-RNv5iGo8ibUrhe6Z0-AABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-        let (_rest, seal) = CesrGroup::from_bytes(attached_str.as_bytes()).unwrap();
+        let (_rest, seal) = CesrGroup::from_stream_bytes(attached_str.as_bytes()).unwrap();
 
         assert_eq!(
             seal,
-            CesrGroup::TransferableIndexedSignaturesGroups(
-                TransferableIndexedSignatureGroups {
+            CesrGroup::TransferableIndexedSignaturesGroupsVariant {
+                value: TransferableIndexedSignaturesGroups {
                     value: vec![
-                        TransferableIndexedSignatureGroup {
+                        TransferableIndexedSignaturesGroup {
                             event_seal: EventSeal {
                                 prefix: "ED9EB3sA5u2vCPOEmX3d7bEyHiSh7Xi8fjew2KMl3FQM"
                                     .parse()
@@ -144,7 +146,7 @@ mod tests {
                         }
                     ]
                 }
-            )
+            }
         );
     }
 }

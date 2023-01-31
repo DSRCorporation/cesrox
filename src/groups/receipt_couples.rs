@@ -35,7 +35,7 @@ impl NontransferableIdentifierReceiptCouples {
         self.to_str().as_bytes().to_vec()
     }
 
-    pub fn from_bytes<'a>(s: &'a[u8]) -> CesrResult<Self> {
+    pub fn from_bytes<'a>(s: &'a [u8]) -> CesrResult<Self> {
         let (rest, parsed) = Self::from_stream_bytes(s)?;
         if !rest.is_empty() {
             return Err(CesrError::NotImplementedError);
@@ -87,8 +87,8 @@ impl<'de> Deserialize<'de> for NontransferableIdentifierReceiptCouples {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct NontransferableIdentifierReceiptCouple {
-    basic: BasicPrefix,
-    self_signing: SelfSigningPrefix,
+    pub basic: BasicPrefix,
+    pub self_signing: SelfSigningPrefix,
 }
 
 impl NontransferableIdentifierReceiptCouple {
@@ -111,11 +111,11 @@ mod tests {
     #[test]
     fn test_parse_receipt_couples() {
         let attached_str = "-CABBed2Tpxc8KeCEWoq3_RKKRjU_3P-chSser9J4eAtAK6I0B8npsG58rX1ex73gaGe-jvRnw58RQGsDLzoSXaGn-kHRRNu6Kb44zXDtMnx-_8CjnHqskvDbz6pbEbed3JTOnCQ";
-        let (_rest, seal) = CesrGroup::from_bytes(attached_str.as_bytes()).unwrap();
+        let (_rest, seal) = CesrGroup::from_stream_bytes(attached_str.as_bytes()).unwrap();
         assert_eq!(
             seal,
-            CesrGroup::NontransferableIdentifierReceiptCouples(
-                NontransferableIdentifierReceiptCouples {
+            CesrGroup::NontransferableIdentifierReceiptCouplesVariant {
+                value: NontransferableIdentifierReceiptCouples {
                     value: vec![
                         NontransferableIdentifierReceiptCouple {
                             basic: "Bed2Tpxc8KeCEWoq3_RKKRjU_3P-chSser9J4eAtAK6I".parse().unwrap(),
@@ -123,7 +123,7 @@ mod tests {
                         }
                     ]
                 }
-            )
+            }
         );
     }
 }
