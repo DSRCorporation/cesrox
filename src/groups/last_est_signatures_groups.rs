@@ -28,12 +28,12 @@ impl LastEstSignaturesGroups {
                 acc,
                 item.identifier_prefix.to_str(),
                 // TODO: avoid cloning here
-                CesrGroup::IndexedControllerSignaturesVariant {
-                    value: IndexedControllerSignatures {
-                        value: item.attached_signature_prefixes.clone(),
-                    }
-                }
-                    .to_str(),
+                // CesrGroup::IndexedControllerSignaturesVariant {
+                //     value: IndexedControllerSignatures {
+                //         value: item.attached_signature_prefixes.clone(),
+                //     }
+                // }
+                //     .to_str(),
             ]
                 .concat()
         });
