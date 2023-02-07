@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_parse_receipt_couples() {
-        let attached_str = "-CABBed2Tpxc8KeCEWoq3_RKKRjU_3P-chSser9J4eAtAK6I0B8npsG58rX1ex73gaGe-jvRnw58RQGsDLzoSXaGn-kHRRNu6Kb44zXDtMnx-_8CjnHqskvDbz6pbEbed3JTOnCQ";
+        let attached_str = "-CABBLlw4Edf2x5K5zE1RFd1m6my_vyB53uH0gZOf-IYmXTE0BAig0HnxA31ZbPTZkyl1Tx0NOUi2vDIWw4eoKrt9g6ZPblw4Edf2x5K5zE1RFd1m6my_vyB53uH0gZOf-IYmXTE";
         let a: BasicPrefix = "Bed2Tpxc8KeCEWoq3_RKKRjU_3P-chSser9J4eAtAK6I".parse().unwrap();
         println!("basic {:?}", a.public_key.value);
         let a: SelfSigningPrefix = "0B8npsG58rX1ex73gaGe-jvRnw58RQGsDLzoSXaGn-kHRRNu6Kb44zXDtMnx-_8CjnHqskvDbz6pbEbed3JTOnCQ".parse().unwrap();
