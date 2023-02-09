@@ -2,7 +2,6 @@ use cesride::counter::Codex;
 use parside::message::group::CesrGroup as ParsideCesrGroup;
 
 use crate::error::{CesrError, CesrResult};
-use crate::Group;
 use crate::message::groups::attached_material_quadlets::AttachedMaterialQuadlets;
 use crate::message::groups::controller_idx_sigs::ControllerIdxSigs;
 use crate::message::groups::first_seen_replay_couples::{
@@ -25,7 +24,7 @@ use crate::message::groups::trans_receipt_quadruples::{
 use crate::message::groups::witness_idx_sigs::WitnessIdxSigs;
 
 #[derive(Debug)]
-pub enum GroupVariants {
+pub enum CesrGroup {
     ControllerIdxSigsVariant { value: ControllerIdxSigs },
     WitnessIdxSigsVariant { value: WitnessIdxSigs },
     NonTransReceiptCouplesVariant { value: NonTransReceiptCouples },
@@ -40,37 +39,37 @@ pub enum GroupVariants {
     PathedMaterialQuadletsVariant { value: PathedMaterialQuadlets },
 }
 
-impl TryFrom<ParsideCesrGroup> for GroupVariants {
+impl TryFrom<ParsideCesrGroup> for CesrGroup {
     type Error = CesrError;
 
-    fn try_from(value: ParsideCesrGroup) -> CesrResult<GroupVariants> {
-        let code = Codex::from_code(&value.counter.code())?;
+    fn try_from(group: ParsideCesrGroup) -> CesrResult<CesrGroup> {
+        let code = Codex::from_code(&group.counter.code())?;
 
         let group = match code {
-            ControllerIdxSigs::CODE => GroupVariants::ControllerIdxSigsVariant {
+            ControllerIdxSigs::CODE => CesrGroup::ControllerIdxSigsVariant {
                 value: ControllerIdxSigs {
-                    value: value.group.single()?,
+                    value: group.value.single()?,
                 },
             },
-            WitnessIdxSigs::CODE => GroupVariants::WitnessIdxSigsVariant {
+            WitnessIdxSigs::CODE => CesrGroup::WitnessIdxSigsVariant {
                 value: WitnessIdxSigs {
-                    value: value.group.single()?,
+                    value: group.value.single()?,
                 },
             },
             NonTransReceiptCouples::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .couple()?
                     .into_iter()
                     .map(|(verfer, cigar)| NonTransReceiptCouple { verfer, cigar })
                     .collect();
-                GroupVariants::NonTransReceiptCouplesVariant {
+                CesrGroup::NonTransReceiptCouplesVariant {
                     value: NonTransReceiptCouples { value },
                 }
             }
             TransReceiptQuadruples::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .quadruple()?
                     .into_iter()
                     .map(|(prefixer, seqner, saider, siger)| TransReceiptQuadruple {
@@ -80,13 +79,13 @@ impl TryFrom<ParsideCesrGroup> for GroupVariants {
                         siger,
                     })
                     .collect();
-                GroupVariants::TransReceiptQuadruplesVariant {
+                CesrGroup::TransReceiptQuadruplesVariant {
                     value: TransReceiptQuadruples { value },
                 }
             }
             TransIdxSigGroups::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .quadruple_with_list()?
                     .into_iter()
                     .map(|(prefixer, seqner, saider, isigers)| TransIdxSigGroup {
@@ -96,13 +95,13 @@ impl TryFrom<ParsideCesrGroup> for GroupVariants {
                         isigers: ControllerIdxSigs::new(isigers),
                     })
                     .collect();
-                GroupVariants::TransIdxSigGroupsVariant {
+                CesrGroup::TransIdxSigGroupsVariant {
                     value: TransIdxSigGroups { value },
                 }
             }
             TransLastIdxSigGroups::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .couple_with_list()?
                     .into_iter()
                     .map(|(prefixer, isigers)| TransLastIdxSigGroup {
@@ -110,29 +109,29 @@ impl TryFrom<ParsideCesrGroup> for GroupVariants {
                         isigers: ControllerIdxSigs::new(isigers),
                     })
                     .collect();
-                GroupVariants::TransLastIdxSigGroupsVariant {
+                CesrGroup::TransLastIdxSigGroupsVariant {
                     value: TransLastIdxSigGroups { value },
                 }
             }
             FirstSeenReplayCouples::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .couple()?
                     .into_iter()
                     .map(|(firner, dater)| FirstSeenReplayCouple { firner, dater })
                     .collect();
-                GroupVariants::FirstSeenReplayCouplesVariant {
+                CesrGroup::FirstSeenReplayCouplesVariant {
                     value: FirstSeenReplayCouples { value },
                 }
             }
             SealSourceCouples::CODE => {
-                let value = value
-                    .group
+                let value = group
+                    .value
                     .couple()?
                     .into_iter()
                     .map(|(seqner, saider)| SealSourceCouple { seqner, saider })
                     .collect();
-                GroupVariants::SealSourceCouplesVariant {
+                CesrGroup::SealSourceCouplesVariant {
                     value: SealSourceCouples { value },
                 }
             }
@@ -151,7 +150,7 @@ impl TryFrom<ParsideCesrGroup> for GroupVariants {
             _ => {
                 return Err(CesrError::Unexpected(format!(
                     "Unexpected counter code {:?}",
-                    value.counter.code()
+                    group.counter.code()
                 )));
             }
         };

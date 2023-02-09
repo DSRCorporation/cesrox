@@ -1,12 +1,12 @@
 use crate::error::{CesrError, CesrResult};
-use crate::message::group::GroupVariants;
+use crate::message::group::CesrGroup;
 use parside::message::custom_payload::CustomPayload;
 use parside::message::message::Message as ParsideMessage;
 
 #[derive(Debug)]
 pub enum Message {
     Custom { value: CustomPayload },
-    Group { value: GroupVariants },
+    Group { value: CesrGroup },
 }
 
 impl Message {
@@ -14,7 +14,7 @@ impl Message {
         let (rest, message) = ParsideMessage::from_stream_bytes(bytes)?;
         let message = match message {
             ParsideMessage::Group { value } => Message::Group {
-                value: GroupVariants::try_from(value)?,
+                value: CesrGroup::try_from(value)?,
             },
             ParsideMessage::Custom { value } => Message::Custom { value },
         };
@@ -28,7 +28,7 @@ impl Message {
         }
     }
 
-    pub fn group(&self) -> CesrResult<&GroupVariants> {
+    pub fn group(&self) -> CesrResult<&CesrGroup> {
         match self {
             Message::Group { value } => Ok(value),
             Message::Custom { .. } => Err(CesrError::InvalidState),
@@ -43,7 +43,7 @@ impl TryFrom<ParsideMessage> for Message {
         match message {
             ParsideMessage::Custom { value } => Ok(Message::Custom { value }),
             ParsideMessage::Group { value } => Ok(Message::Group {
-                value: GroupVariants::try_from(value)?,
+                value: CesrGroup::try_from(value)?,
             }),
         }
     }

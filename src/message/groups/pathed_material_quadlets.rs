@@ -1,7 +1,6 @@
 use crate::error::CesrResult;
 use cesride::counter::Codex;
-use cesride::Matter;
-use crate::Group;
+use cesride::{Counter, Matter};
 
 #[derive(Debug, Clone, Default)]
 pub struct PathedMaterialQuadlets {
@@ -9,27 +8,41 @@ pub struct PathedMaterialQuadlets {
 }
 
 impl PathedMaterialQuadlets {
+    pub const CODE: Codex = Codex::PathedMaterialQuadlets;
+
     pub fn new(value: Vec<Matter>) -> Self {
         Self { value }
     }
-}
 
-impl Group for PathedMaterialQuadlets {
-    const CODE: Codex = Codex::PathedMaterialQuadlets;
+    pub fn counter(&self) -> Counter {
+        Counter::new(&Self::CODE.code(), self.count())
+    }
 
-    fn count(&self) -> u32 {
+    pub fn count(&self) -> u32 {
         self.value.len() as u32
     }
 
-    fn to_string(&self) -> CesrResult<String> {
-        let mut string = self.counter().qb64()?;
+    pub fn qb64(&self) -> CesrResult<String> {
+        let mut out = self.counter().qb64()?;
         for matter in self.value.iter() {
-            string.push_str(&matter.qb64()?);
+            out.push_str(&matter.qb64()?);
         }
-        Ok(string)
+        Ok(out)
     }
 
-    fn to_bytes(&self) -> CesrResult<Vec<u8>> {
-        self.to_string().map(|str| str.as_bytes().to_vec())
+    pub fn qb64b(&self) -> CesrResult<Vec<u8>> {
+        let mut out = self.counter().qb64b()?;
+        for matter in self.value.iter() {
+            out.extend_from_slice(&matter.qb64b()?);
+        }
+        Ok(out)
+    }
+
+    pub fn qb2(&self) -> CesrResult<Vec<u8>> {
+        let mut out = self.counter().qb2()?;
+        for matter in self.value.iter() {
+            out.extend_from_slice(&matter.qb2()?);
+        }
+        Ok(out)
     }
 }

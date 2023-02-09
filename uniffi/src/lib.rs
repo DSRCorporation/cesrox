@@ -1,12 +1,8 @@
 pub use cesrox_core::error::{CesrError, CesrResult};
 
-pub mod groups;
 pub mod message;
-pub mod primitives;
 
-pub use self::groups::*;
 pub use self::message::*;
-pub use self::primitives::*;
 
 // We must implement the UniffiCustomTypeWrapper trait.
 impl UniffiCustomTypeConverter for JsonValue {

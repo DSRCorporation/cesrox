@@ -1,4 +1,4 @@
-use cesrox::{MessageList, Message, Group, GroupVariants};
+use cesrox::{MessageList, Message, CesrGroup};
 
 #[cfg(test)]
 pub mod tests {
@@ -19,11 +19,11 @@ pub mod tests {
         assert!(matches!(message_list.messages[3], Message::Group { .. }));
 
         let group = message_list.messages.get(1).unwrap().group().unwrap();
-        assert!(matches!(group, GroupVariants::NonTransReceiptCouplesVariant { .. }));
+        assert!(matches!(group, CesrGroup::NonTransReceiptCouplesVariant { .. }));
 
         let group = message_list.messages.get(3).unwrap().group().unwrap();
         match group {
-            GroupVariants::NonTransReceiptCouplesVariant { value } => {
+            CesrGroup::NonTransReceiptCouplesVariant { value } => {
                 let string = value.to_string().unwrap();
                 assert_eq!(string, "-CABBD8-gMSJ6K1PQ7_gG5ZJn2NkHQJgdkiNrTBz_FWWS_cC0BDc1i44ZX0jaIHh5oNDx-TITbPnI6VEn2nKlqPwkkTF452X7XxYh80tolDpReYwZpnD8TF4Or2v3CpSCikyt6EG");
             },
