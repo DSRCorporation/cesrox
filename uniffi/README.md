@@ -11,26 +11,40 @@ cargo run --bin uniffi-bindgen generate src/cesrox.udl --language kotlin
 import uniffi.cesrox.*
 
 fun main(args: Array<String>) {
-    var keyBytes: List<UByte> = listOf(118, 206, 49, 173, 1, 174, 101, 84, 226, 178, 184, 205, 80, 1, 218, 21, 29, 184, 40, 50, 28, 119, 62, 15, 96, 72, 64, 37, 59, 79, 9, 184) .map { it.toUByte() }
-    var key = keyCreate(keyBytes);
-    var basicPrefix = basicPrefixCreate(BasicCode.ED25519, key)
+    var stream: List<UByte> = "{\"v\":\"KERI10JSON00012b_\",\"t\":\"icp\"}-CABBD8-gMSJ6K1PQ7_gG5ZJn2NkHQJgdkiNrTBz_FWWS_cC0BDc1i44ZX0jaIHh5oNDx-TITbPnI6VEn2nKlqPwkkTF452X7XxYh80tolDpReYwZpnD8TF4Or2v3CpSCikyt6EG{\"v\":\"KERI10JSON00012b_\",\"t\":\"icp\"}-CABBD8-gMSJ6K1PQ7_gG5ZJn2NkHQJgdkiNrTBz_FWWS_cC0BDc1i44ZX0jaIHh5oNDx-TITbPnI6VEn2nKlqPwkkTF452X7XxYh80tolDpReYwZpnD8TF4Or2v3CpSCikyt6EG".toByteArray().map { it.toUByte() }
+    var result: MessageListFromStreamResult = messageListFromStreamBytes(stream)
+    var message1 = result.messages[0]
+    var message2 = result.messages[1]
+    var message3 = result.messages[2]
+    var message4 = result.messages[3]
 
-    var basicPrefixString = basicPrefixToStr(basicPrefix)
-    println("BasicPrefixString: $basicPrefixString")
-    var basicPrefixRestoredFromString = basicPrefixFromStr(basicPrefixString)
-    println("BasicPrefixFromString: $basicPrefixRestoredFromString")
+    var payload1: CustomPayload = message1.payload!!
+    var grop1: CesrGroup = message2.group!!
+    var payload2: CustomPayload = message3.payload!!
+    var grop2: CesrGroup = message4.group!!
 
-    var basicPrefixBytes = basicPrefixToBytes(basicPrefix)
-    println("BasicPrefixBytes: $basicPrefixBytes")
-    var basicPrefixRestored = basicPrefixFromBytes(basicPrefixBytes)
-    println("BasicPrefixRestored: $basicPrefixRestored")
-    println("BasicPrefixBytesDerivation: ${basicPrefixRestored.derivation}")
-    println("BasicPrefixBytesPublicKey: ${basicPrefixRestored.publicKey.value}")
+    var nonTransReceiptCouples: NonTransReceiptCouples = grop1.nonTransReceiptCouples!!
+    var nonTransReceiptCouple: NonTransReceiptCouple = nonTransReceiptCouples.value.get(0)
 
-    var indexedControllerSignatures: List<UByte> = listOf(45, 65, 65, 66, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65) .map { it.toUByte() }
-    var messageFromStreamBytesResult = messageFromStreamBytes(indexedControllerSignatures)
-    println("messageFromStreamBytesResult rest: ${messageFromStreamBytesResult.rest}")
-    println("messageFromStreamBytesResult: ${messageFromStreamBytesResult.message}")
+
+    println("message1: $message1")
+    println("message2: $message2")
+    println("message3: $message3")
+    println("message4: $message4")
+
+    println("payload1: $payload1")
+    println("grop1: $grop1")
+    println("payload2: $payload2")
+    println("grop2: $grop2")
+
+    println("nonTransReceiptCouple cigar: ${nonTransReceiptCouple.cigar}")
+    println("nonTransReceiptCouple verfer: ${nonTransReceiptCouple.verfer}")
+
+    var matter: Matter = matterNewWithQb64("BGlOiUdp5sMmfotHfCWQKEzWR91C72AH0lT84c0um-Qj")
+    var values = listOf<Matter>(matter)
+    var controllerIdxSigs = controllerIdxSigsCreate(values)
+    var string = controllerIdxSigsQb64(controllerIdxSigs)
+    println("controllerIdxSigsQb64: $string")   
 }
 ```
 

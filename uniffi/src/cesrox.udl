@@ -101,26 +101,25 @@ dictionary CustomPayload {
   JsonValue value;
 };
 
-[Enum]
-interface CesrGroup {
-    ControllerIdxSigsVariant(ControllerIdxSigs value);
-    WitnessIdxSigsVariant(WitnessIdxSigs value);
-    NonTransReceiptCouplesVariant(NonTransReceiptCouples value);
-    TransReceiptQuadruplesVariant(TransReceiptQuadruples value);
-    TransIdxSigGroupsVariant(TransIdxSigGroups value);
-    TransLastIdxSigGroupsVariant(TransLastIdxSigGroups value);
-    FirstSeenReplayCouplesVariant(FirstSeenReplayCouples value);
-    SealSourceCouplesVariant(SealSourceCouples value);
-    AttachedMaterialQuadletsVariant(AttachedMaterialQuadlets value);
-    SadPathSigGroupVariant(SadPathSigGroup value);
-    SadPathSigVariant(SadPathSig value);
-    PathedMaterialQuadletsVariant(PathedMaterialQuadlets value);
+dictionary CesrGroup {
+    AttachedMaterialQuadlets? attached_material_quadlets;
+    ControllerIdxSigs? controller_idx_sigs;
+    FirstSeenReplayCouples? first_seen_replay_couples;
+    NonTransReceiptCouples? non_trans_receipt_couples;
+    PathedMaterialQuadlets? pathed_material_quadlets;
+    SadPathSig? sad_path_sig;
+    SadPathSigGroup? sad_path_sig_group;
+    SealSourceCouples? seal_source_couples;
+    TransIdxSigGroups? trans_idx_sig_groups;
+    TransLastIdxSigGroups? trans_last_idx_sig_groups;
+    TransReceiptQuadruples? trans_receipt_quadruples;
+    WitnessIdxSigs? witness_idx_sigs;
 };
 
-[Enum]
-interface Message {
-    Custom(CustomPayload value);
-    Group(CesrGroup value);
+
+dictionary Message {
+    CustomPayload? payload;
+    CesrGroup? group;
 };
 
 dictionary MessageList {
@@ -134,7 +133,7 @@ dictionary MessageFromStreamResult {
 
 dictionary MessageListFromStreamResult {
   sequence<u8> rest;
-  MessageList messages;
+  sequence<Message> messages;
 };
 
 namespace cesrox {
