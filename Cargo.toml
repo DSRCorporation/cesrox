@@ -5,6 +5,6 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-cesride = { path = "/Users/artem/cesride" }
-parside = { path = "/Users/artem/parside" }
+cesride = { git = "https://github.com/DSRCorporation/cesride.git" }
+parside = { git = "https://github.com/DSRCorporation/parside.git", branch = "iitial-implementation-with-generic-result" }
 thiserror = "1.0"

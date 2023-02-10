@@ -26,7 +26,6 @@ fun main(args: Array<String>) {
     var nonTransReceiptCouples: NonTransReceiptCouples = grop1.nonTransReceiptCouples!!
     var nonTransReceiptCouple: NonTransReceiptCouple = nonTransReceiptCouples.value.get(0)
 
-
     println("message1: $message1")
     println("message2: $message2")
     println("message3: $message3")
