@@ -7,6 +7,7 @@ use crate::message::groups::controller_idx_sigs::ControllerIdxSigs;
 use crate::message::groups::first_seen_replay_couples::{
     FirstSeenReplayCouple, FirstSeenReplayCouples,
 };
+use crate::message::groups::Group;
 use crate::message::groups::non_trans_receipt_couples::{
     NonTransReceiptCouple, NonTransReceiptCouples,
 };

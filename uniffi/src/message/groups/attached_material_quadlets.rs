@@ -1,5 +1,5 @@
 use cesrox_core::error::CesrResult;
-use cesrox_core::Matter;
+use cesrox_core::{Matter, Group};
 pub use cesrox_core::message::groups::AttachedMaterialQuadlets;
 
 pub fn attached_material_quadlets_create(value: Vec<Matter>) -> AttachedMaterialQuadlets {

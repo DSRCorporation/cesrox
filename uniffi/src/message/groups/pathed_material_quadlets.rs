@@ -1,5 +1,5 @@
 use cesrox_core::error::CesrResult;
-pub use cesrox_core::Matter;
+use cesrox_core::{Matter, Group};
 pub use cesrox_core::message::groups::{
     PathedMaterialQuadlets,
 };

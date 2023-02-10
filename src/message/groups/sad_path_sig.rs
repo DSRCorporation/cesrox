@@ -1,48 +1,20 @@
-use crate::error::CesrResult;
 use cesride::counter::Codex;
-use cesride::{Counter, Matter};
+use cesride::Matter;
+use crate::message::groups::Group;
 
 #[derive(Debug, Clone, Default)]
 pub struct SadPathSig {
     pub value: Vec<Matter>,
 }
 
-impl SadPathSig {
-    pub const CODE: Codex = Codex::SadPathSig;
+impl Group<Matter> for SadPathSig {
+    const CODE: Codex = Codex::SadPathSig;
 
-    pub fn new(value: Vec<Matter>) -> Self {
+    fn new(value: Vec<Matter>) -> Self {
         Self { value }
     }
 
-    pub fn counter(&self) -> Counter {
-        Counter::new(&Self::CODE.code(), self.count())
-    }
-
-    pub fn count(&self) -> u32 {
-        self.value.len() as u32
-    }
-
-    pub fn qb64(&self) -> CesrResult<String> {
-        let mut out = self.counter().qb64()?;
-        for matter in self.value.iter() {
-            out.push_str(&matter.qb64()?);
-        }
-        Ok(out)
-    }
-
-    pub fn qb64b(&self) -> CesrResult<Vec<u8>> {
-        let mut out = self.counter().qb64b()?;
-        for matter in self.value.iter() {
-            out.extend_from_slice(&matter.qb64b()?);
-        }
-        Ok(out)
-    }
-
-    pub fn qb2(&self) -> CesrResult<Vec<u8>> {
-        let mut out = self.counter().qb2()?;
-        for matter in self.value.iter() {
-            out.extend_from_slice(&matter.qb2()?);
-        }
-        Ok(out)
+    fn value(&self) -> &Vec<Matter> {
+        &self.value
     }
 }
