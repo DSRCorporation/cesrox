@@ -1,8 +1,9 @@
-pub use cesrox_core::error::{CesrError, CesrResult};
+pub use cesrox::error::{ParsideError, ParsideResult};
 
 pub mod message;
 
 pub use self::message::*;
+pub use cesrox::*;
 
 // We must implement the UniffiCustomTypeWrapper trait.
 impl UniffiCustomTypeConverter for JsonValue {

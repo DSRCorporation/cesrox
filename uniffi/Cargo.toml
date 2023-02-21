@@ -11,11 +11,8 @@ crate-type = ["cdylib"]
 name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
-[dependencies.cesrox_core]
-path = '..'
-package = "cesrox"
-
 [dependencies]
+cesrox = { path = '..', package = "cesrox" }
 uniffi = { version="0.23", features = [ "cli" ] }
 uniffi_bindgen = "0.23.0"
 uniffi_macros = "0.23"
