@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Signer, Matter};
+use crate::message::primitives::MatterCodex;
 
-pub fn signer_new_with_code_and_raw(code: &str, raw: &[u8], transferable: bool) -> ParsideResult<Signer> {
-    Signer::new_with_code_and_raw(code, raw, transferable).map_err(ParsideError::from)
+pub fn signer_new_with_code_and_raw(code: &MatterCodex, raw: &[u8], transferable: bool) -> ParsideResult<Signer> {
+    Signer::new_with_code_and_raw(code.code(), raw, transferable).map_err(ParsideError::from)
 }
 
 pub fn signer_new_with_qb64(qb64: &str, transferable: bool) -> ParsideResult<Signer> {

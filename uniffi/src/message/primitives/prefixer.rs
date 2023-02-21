@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Prefixer, Matter};
+use crate::message::primitives::MatterCodex;
 
-pub fn prefixer_new_with_code_and_raw(code: &str, raw: &[u8]) -> ParsideResult<Prefixer> {
-    Prefixer::new_with_code_and_raw(code, raw).map_err(ParsideError::from)
+pub fn prefixer_new_with_code_and_raw(code: &MatterCodex, raw: &[u8]) -> ParsideResult<Prefixer> {
+    Prefixer::new_with_code_and_raw(code.code(), raw).map_err(ParsideError::from)
 }
 
 pub fn prefixer_new_with_qb64(qb64: &str) -> ParsideResult<Prefixer> {

@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Cigar, Verfer, Matter};
+use crate::message::primitives::MatterCodex;
 
-pub fn cigar_new_with_code_and_raw(verfer: &Verfer, code: &str, raw: &[u8]) -> ParsideResult<Cigar> {
-    Cigar::new_with_code_and_raw(verfer, code, raw).map_err(ParsideError::from)
+pub fn cigar_new_with_code_and_raw(verfer: &Verfer, code: &MatterCodex, raw: &[u8]) -> ParsideResult<Cigar> {
+    Cigar::new_with_code_and_raw(verfer, code.code(), raw).map_err(ParsideError::from)
 }
 
 pub fn cigar_new_with_qb64(verfer: &Verfer, qb64: &str) -> ParsideResult<Cigar> {

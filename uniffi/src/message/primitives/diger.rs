@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Diger, Matter};
+use crate::message::primitives::MatterCodex;
 
-pub fn diger_new_with_code_and_raw(code: &str, raw: &[u8]) -> ParsideResult<Diger> {
-    Diger::new_with_code_and_raw(code, raw).map_err(ParsideError::from)
+pub fn diger_new_with_code_and_raw(code: &MatterCodex, raw: &[u8]) -> ParsideResult<Diger> {
+    Diger::new_with_code_and_raw(code.code(), raw).map_err(ParsideError::from)
 }
 
 pub fn diger_new_with_qb64(qb64: &str) -> ParsideResult<Diger> {

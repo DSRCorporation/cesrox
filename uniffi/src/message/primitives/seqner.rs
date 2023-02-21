@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Seqner, Matter};
+use crate::message::primitives::MatterCodex;
 
-pub fn seqner_new_with_code_and_raw(code: &str, raw: &[u8]) -> ParsideResult<Seqner> {
-    Seqner::new_with_code_and_raw(code, raw).map_err(ParsideError::from)
+pub fn seqner_new_with_code_and_raw(code: &MatterCodex, raw: &[u8]) -> ParsideResult<Seqner> {
+    Seqner::new_with_code_and_raw(code.code(), raw).map_err(ParsideError::from)
 }
 
 pub fn seqner_new_with_qb64(qb64: &str) -> ParsideResult<Seqner> {

@@ -1,8 +1,9 @@
 pub use cesrox::error::{ParsideError, ParsideResult};
 pub use cesrox::{Siger, Matter, Indexer, Verfer};
+use crate::message::primitives::IndexerCodex;
 
-pub fn siger_new_with_code_and_raw(code: &str, raw: &[u8], index: u32, ondex: Option<u32>) -> ParsideResult<Siger> {
-    Siger::new_with_code_and_raw(code, raw, index, ondex).map_err(ParsideError::from)
+pub fn siger_new_with_code_and_raw(code: &IndexerCodex, raw: &[u8], index: u32, ondex: Option<u32>) -> ParsideResult<Siger> {
+    Siger::new_with_code_and_raw(code.code(), raw, index, ondex).map_err(ParsideError::from)
 }
 
 pub fn siger_new_with_qb64(qb64: &str) -> ParsideResult<Siger> {

@@ -1,4 +1,5 @@
 pub mod cigar;
+pub mod codex;
 pub mod dater;
 pub mod diger;
 pub mod prefixer;
@@ -9,6 +10,7 @@ pub mod siger;
 pub mod verfer;
 
 pub use cigar::*;
+pub use codex::*;
 pub use dater::*;
 pub use diger::*;
 pub use prefixer::*;
