@@ -8,7 +8,7 @@
   * Uniffi can be added by pulling from https://github.com/DSRCorporation/cesrox/tree/ffi-library
     * Bad:
       * requires struct fields to be public
-      * we have to use `dictioaries` and write additional wrapper object to make it more language friendy.
+      * we have to use `dictionaries` and write additional wrapper object to make it more language friendly.
 
 
 ### Parside
@@ -21,7 +21,7 @@ There are two PRs opened for a while.
           * We cannot return vector of `traits` (`Vec<Matter>` or `Vec<Indexer>`) defining static methods (`new`).
           * We need to know primitive kinds in order to parse the whole properly:
               * It is not enough to know only the fact that a group consists of 4 primitives.
-              * It looks like for at leas for current implementation, from the same bytes can parse almost any primitive (Prefixer, Verfer, Serder).
+              * Cesride (Keripy) logical primitives are not matched 1-1 to CESR data primitives. The same bytes can be parsed to a number of cesride primitives. For instance `Blake3_256` data encoded with `E` could refer to `Diger`, `Prefixer` or `Saider` as well as just be a Matter primitive.
 * `Initial parser implementation including definitions for Groups`
     * State: `work`
         * Points to the branch (wait merges of PR’s mentioned above)
@@ -29,7 +29,7 @@ There are two PRs opened for a while.
     * Do we need an ability to `inject` them? or we can define all possible inside of parside? 
         * Injection: Pass callback to parse groups by code
             * Parside will be very very thin - useless library.   
-            * Most of the code will be is inside of callbacks.
+            * Most of the code will be inside of callbacks.
         * AFAIR: Stream bytes includes information about the version of the table.
             * Parside can known and define all possible versions
             * Parside handle bytes depending on the version
